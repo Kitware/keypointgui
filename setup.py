@@ -34,12 +34,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 from distutils.core import setup
 
-setup(name='keypoint_matching_gui',
+setup(name='keypointgui',
       version='1.0',
       description='Keypoint Matching GUI',
       author='Matt Brown',
       author_email='matt.brown@kitware.com',
       url='https://www.python.org/sigs/distutils-sig/',
-      packages=['keypoint_matching_gui'],
-      package_data={'keypoint_matching_gui': ['tests/*.jpg','tests/*.txt']},
+      packages=['keypointgui'],
+      package_data={'keypointgui': ['tests/*.jpg','tests/*.txt']},
      )
