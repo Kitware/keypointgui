@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*- 
 
 ###########################################################################
-## Python code generated with wxFormBuilder (version Jun 17 2015)
+## Python code generated with wxFormBuilder (version Feb 16 2016)
 ## http://www.wxformbuilder.org/
 ##
 ## PLEASE DO "NOT" EDIT THIS FILE!
@@ -74,6 +74,12 @@ class MainFrame ( wx.Frame ):
 		self.sync_zooms_checkbox.SetValue(True) 
 		bSizer1111.Add( self.sync_zooms_checkbox, 0, wx.ALL, 5 )
 		
+		self.alignment_label1 = wx.StaticText( self.tool_panel, wx.ID_ANY, u"Alignment", wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTRE|wx.ST_NO_AUTORESIZE )
+		self.alignment_label1.Wrap( -1 )
+		self.alignment_label1.SetFont( wx.Font( 12, 70, 90, 92, False, wx.EmptyString ) )
+		
+		bSizer1111.Add( self.alignment_label1, 0, wx.ALL, 5 )
+		
 		
 		button_sizer.Add( bSizer1111, 0, wx.EXPAND, 5 )
 		
@@ -113,7 +119,7 @@ class MainFrame ( wx.Frame ):
 		
 		self.image1_nav_panel = wx.ScrolledWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.HSCROLL|wx.VSCROLL )
 		self.image1_nav_panel.SetScrollRate( 5, 5 )
-		image1_navigation_bsizer.Add( self.image1_nav_panel, 1, wx.ALL|wx.EXPAND, 5 )
+		image1_navigation_bsizer.Add( self.image1_nav_panel, 1, wx.EXPAND|wx.ALL, 5 )
 		
 		
 		image1_bsizer.Add( image1_navigation_bsizer, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5 )
@@ -206,11 +212,20 @@ class MainFrame ( wx.Frame ):
 		self.status_bar = self.CreateStatusBar( 1, wx.ST_SIZEGRIP, wx.ID_ANY )
 		self.m_menubar1 = wx.MenuBar( 0 )
 		self.menu_file = wx.Menu()
-		self.menu_item_load_image = wx.MenuItem( self.menu_file, wx.ID_ANY, u"Load Image", wx.EmptyString, wx.ITEM_NORMAL )
-		self.menu_file.AppendItem( self.menu_item_load_image )
+		self.menu_item_load_left_image = wx.MenuItem( self.menu_file, wx.ID_ANY, u"Load Left Image", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_file.AppendItem( self.menu_item_load_left_image )
 		
-		self.menu_item_save_image = wx.MenuItem( self.menu_file, wx.ID_ANY, u"Save Image", wx.EmptyString, wx.ITEM_NORMAL )
-		self.menu_file.AppendItem( self.menu_item_save_image )
+		self.menu_item_load_right_image = wx.MenuItem( self.menu_file, wx.ID_ANY, u"Load Right Image", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_file.AppendItem( self.menu_item_load_right_image )
+		
+		self.menu_item_save_points = wx.MenuItem( self.menu_file, wx.ID_ANY, u"Save Points", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_file.AppendItem( self.menu_item_save_points )
+		
+		self.menu_item_save_left_to_right_homography = wx.MenuItem( self.menu_file, wx.ID_ANY, u"Save Left->Right Homography", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_file.AppendItem( self.menu_item_save_left_to_right_homography )
+		
+		self.menu_item_save_right_to_left_homography = wx.MenuItem( self.menu_file, wx.ID_ANY, u"Save Right->Left Homography", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_file.AppendItem( self.menu_item_save_right_to_left_homography )
 		
 		self.exit_menu_item = wx.MenuItem( self.menu_file, wx.ID_ANY, u"Exit", wx.EmptyString, wx.ITEM_NORMAL )
 		self.menu_file.AppendItem( self.exit_menu_item )
@@ -236,8 +251,11 @@ class MainFrame ( wx.Frame ):
 		self.clear_all_button.Bind( wx.EVT_BUTTON, self.on_clear_all_button )
 		self.finish_button.Bind( wx.EVT_BUTTON, self.on_finish_button )
 		self.cancel_button.Bind( wx.EVT_BUTTON, self.on_cancel_button )
-		self.Bind( wx.EVT_MENU, self.on_load_image, id = self.menu_item_load_image.GetId() )
-		self.Bind( wx.EVT_MENU, self.on_save_image, id = self.menu_item_save_image.GetId() )
+		self.Bind( wx.EVT_MENU, self.on_load_left_image, id = self.menu_item_load_left_image.GetId() )
+		self.Bind( wx.EVT_MENU, self.on_load_right_image, id = self.menu_item_load_right_image.GetId() )
+		self.Bind( wx.EVT_MENU, self.on_save_points, id = self.menu_item_save_points.GetId() )
+		self.Bind( wx.EVT_MENU, self.on_save_left_to_right_homography, id = self.menu_item_save_left_to_right_homography.GetId() )
+		self.Bind( wx.EVT_MENU, self.on_save_right_to_left_homography, id = self.menu_item_save_right_to_left_homography.GetId() )
 		self.Bind( wx.EVT_MENU, self.on_close_button, id = self.exit_menu_item.GetId() )
 		self.Bind( wx.EVT_MENU, self.on_menu_item_about, id = self.menu_item_about.GetId() )
 	
@@ -250,8 +268,11 @@ class MainFrame ( wx.Frame ):
 		self.clear_all_button.Unbind( wx.EVT_BUTTON, None )
 		self.finish_button.Unbind( wx.EVT_BUTTON, None )
 		self.cancel_button.Unbind( wx.EVT_BUTTON, None )
-		self.Unbind( wx.EVT_MENU, id = self.menu_item_load_image.GetId() )
-		self.Unbind( wx.EVT_MENU, id = self.menu_item_save_image.GetId() )
+		self.Unbind( wx.EVT_MENU, id = self.menu_item_load_left_image.GetId() )
+		self.Unbind( wx.EVT_MENU, id = self.menu_item_load_right_image.GetId() )
+		self.Unbind( wx.EVT_MENU, id = self.menu_item_save_points.GetId() )
+		self.Unbind( wx.EVT_MENU, id = self.menu_item_save_left_to_right_homography.GetId() )
+		self.Unbind( wx.EVT_MENU, id = self.menu_item_save_right_to_left_homography.GetId() )
 		self.Unbind( wx.EVT_MENU, id = self.exit_menu_item.GetId() )
 		self.Unbind( wx.EVT_MENU, id = self.menu_item_about.GetId() )
 	
@@ -278,10 +299,19 @@ class MainFrame ( wx.Frame ):
 	def on_cancel_button( self, event ):
 		event.Skip()
 	
-	def on_load_image( self, event ):
+	def on_load_left_image( self, event ):
 		event.Skip()
 	
-	def on_save_image( self, event ):
+	def on_load_right_image( self, event ):
+		event.Skip()
+	
+	def on_save_points( self, event ):
+		event.Skip()
+	
+	def on_save_left_to_right_homography( self, event ):
+		event.Skip()
+	
+	def on_save_right_to_left_homography( self, event ):
 		event.Skip()
 	
 	def on_close_button( self, event ):
