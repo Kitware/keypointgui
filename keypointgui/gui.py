@@ -786,10 +786,12 @@ class MainFrame(form_builder_output.MainFrame):
     def on_align_left_to_right(self, event):
         pts1 = self.nav_panel_image1.get_red_points()
         pts2 = self.nav_panel_image2.get_red_points()
-        if pts1 is None or pts2 is None:
-            return
-        
-        if len(pts1) < 4:
+        if pts1 is None or pts2 is None or len(pts1) < 4:
+            msg = 'Need at least four selected pairs of points to align images.'
+            dlg = wx.MessageDialog(self, msg,'Warning', 
+                                   wx.OK | wx.ICON_WARNING)
+            dlg.ShowModal()
+            dlg.Destroy()
             return
         
         pts1 = pts1.reshape(-1,1,2)
@@ -816,10 +818,12 @@ class MainFrame(form_builder_output.MainFrame):
         pts1 = self.nav_panel_image1.get_red_points()
         pts2 = self.nav_panel_image2.get_red_points()
         
-        if pts1 is None or pts2 is None:
-            return
-        
-        if len(pts1) < 4:
+        if pts1 is None or pts2 is None or len(pts1) < 4:
+            msg = 'Need at least four selected pairs of points to align images.'
+            dlg = wx.MessageDialog(self, msg,'Warning', 
+                                   wx.OK | wx.ICON_WARNING)
+            dlg.ShowModal()
+            dlg.Destroy()
             return
         
         H = cv2.findHomography(pts2.reshape(-1,1,2), 
@@ -874,6 +878,11 @@ class MainFrame(form_builder_output.MainFrame):
         pts2 = self.nav_panel_image2.get_red_points()
         
         if pts1 is None or pts2 is None:
+            msg = 'No points have been selected.'
+            dlg = wx.MessageDialog(self, msg,'Warning', 
+                                   wx.OK | wx.ICON_WARNING)
+            dlg.ShowModal()
+            dlg.Destroy()
             return
         
         fdlg = wx.FileDialog(self, 'Save point correspondences', os.getcwd(), 
@@ -888,12 +897,25 @@ class MainFrame(form_builder_output.MainFrame):
     
     def on_save_left_to_right_homography(self, event):
         pts1 = self.nav_panel_image1.get_red_points()
-        pts2 = self.nav_panel_image2.get_red_points()
+        pts2 = self.nav_panel_image2.get_red_points()        
+        self.save_homography(pts1, pts2)
         
-        if pts1 is None or pts2 is None:
+    def on_save_right_to_left_homography(self, event):
+        pts1 = self.nav_panel_image1.get_red_points()
+        pts2 = self.nav_panel_image2.get_red_points()
+        self.save_homography(pts2, pts1)
+    
+    def save_homography(self, pts1, pts2):        
+        if pts1 is None or pts2 is None or len(pts1) < 4:
+            msg = ''.join(['Need at least four selected pairs of points to ',
+                           'calculate homography.'])
+            dlg = wx.MessageDialog(self, msg,'Warning', 
+                                   wx.OK | wx.ICON_WARNING)
+            dlg.ShowModal()
+            dlg.Destroy()
             return
         
-        fdlg = wx.FileDialog(self, 'Save left -> right homography', 
+        fdlg = wx.FileDialog(self, 'Save homography', 
                              os.getcwd(), 'homography', '*.txt', 
                              wx.SAVE|wx.OVERWRITE_PROMPT)
         if fdlg.ShowModal() == wx.ID_OK:
@@ -903,25 +925,6 @@ class MainFrame(form_builder_output.MainFrame):
         
         H = cv2.findHomography(pts1.reshape(-1,1,2), 
                                pts2.reshape(-1,1,2))[0]
-        np.savetxt(file_path, H)
-        
-    def on_save_right_to_left_homography(self, event):
-        pts1 = self.nav_panel_image1.get_red_points()
-        pts2 = self.nav_panel_image2.get_red_points()
-        
-        if pts1 is None or pts2 is None:
-            return
-        
-        fdlg = wx.FileDialog(self, 'Save right -> left homography', 
-                             os.getcwd(), 'homography', '*.txt', 
-                             wx.SAVE|wx.OVERWRITE_PROMPT)
-        if fdlg.ShowModal() == wx.ID_OK:
-            file_path = fdlg.GetPath()
-        else:
-            return
-        
-        H = cv2.findHomography(pts2.reshape(-1,1,2), 
-                               pts1.reshape(-1,1,2))[0]
         np.savetxt(file_path, H)
         
     def on_menu_item_about(self, event):
