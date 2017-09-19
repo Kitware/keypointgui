@@ -12,7 +12,7 @@ The "source" code resides under the `keypointgui directory`:
 
 - `gui.py` - the implementation of the GUI, which calls upon the layout defined in`form_builder_output.py`. This is the main "executable".
 
-- `gui.fbp` - wxFormBuilder format file (`necessary version <https://sourceforge.net/projects/wxformbuilder/files/wxformbuilder-nightly/3.5.1-rc1/>`_).
+- `gui.fbp` - wxFormBuilder format file (`necessary version to edit GUI <https://sourceforge.net/projects/wxformbuilder/files/wxformbuilder-nightly/3.5.1-rc1/>`_).
 
 - `form_builder_output.py` - automatically generated from `gui.fbp` using wxFormBuilder.
 
@@ -79,5 +79,5 @@ The menu options:
 
   File -> Save Right->Left Homography
 
-saves a homography to a text file the warps coordinates from the left image into
-the right image or the right image into the left image, respectively.
+saves a homography to a text file that warps coordinates from the left image 
+into the right image or the right image into the left image, respectively.
