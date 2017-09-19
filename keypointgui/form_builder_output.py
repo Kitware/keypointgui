@@ -74,17 +74,17 @@ class MainFrame ( wx.Frame ):
 		self.sync_zooms_checkbox.SetValue(True) 
 		bSizer1111.Add( self.sync_zooms_checkbox, 0, wx.ALL, 5 )
 		
-		self.alignment_label1 = wx.StaticText( self.tool_panel, wx.ID_ANY, u"Alignment", wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTRE|wx.ST_NO_AUTORESIZE )
-		self.alignment_label1.Wrap( -1 )
-		self.alignment_label1.SetFont( wx.Font( 12, 70, 90, 92, False, wx.EmptyString ) )
-		
-		bSizer1111.Add( self.alignment_label1, 0, wx.ALL, 5 )
-		
 		
 		button_sizer.Add( bSizer1111, 0, wx.EXPAND, 5 )
 		
 		self.m_staticline1 = wx.StaticLine( self.tool_panel, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		button_sizer.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
+		
+		self.points_label = wx.StaticText( self.tool_panel, wx.ID_ANY, u"Points", wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTRE|wx.ST_NO_AUTORESIZE )
+		self.points_label.Wrap( -1 )
+		self.points_label.SetFont( wx.Font( 12, 70, 90, 92, False, wx.EmptyString ) )
+		
+		button_sizer.Add( self.points_label, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5 )
 		
 		self.clear_last_button = wx.Button( self.tool_panel, wx.ID_ANY, u"Clear Last", wx.DefaultPosition, wx.DefaultSize, 0 )
 		button_sizer.Add( self.clear_last_button, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5 )
