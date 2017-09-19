@@ -9,6 +9,6 @@ The "source" code resides under the `keypoint_matching_gui directory`:
 
 - `gui.py` - the implementation of the GUI, which calls upon the layout defined in`form_builder_output.py`.
 
-- `gui.fbp` - wxFormBuilder format file (`necessary version <https://sourceforge.net/projects/wxformbuilder/files/wxformbuilder-nightly/3.4.2-beta/>`_).
+- `gui.fbp` - wxFormBuilder format file (`necessary version <https://sourceforge.net/projects/wxformbuilder/files/wxformbuilder-nightly/3.5.1-rc1/>`_).
 
 - `form_builder_output.py` - automatically generated from `gui.fbp` using wxFormBuilder.
