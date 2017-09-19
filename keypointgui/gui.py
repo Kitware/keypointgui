@@ -143,7 +143,7 @@ class ImagePanelManager(object):
         
         """
         self.raw_image = raw_image
-        self.update_all()
+        #self.update_all()
     
     def warp_image(self):
         """Apply homography.
@@ -423,9 +423,13 @@ class NavigationPanelImage(ImagePanelManager):
         # redrawn.
         self.zoom_panel_image.wx_panel.Bind(wx.EVT_PAINT, self.refresh)
     
-    def update_raw_image(self, raw_image):        
+    def update_raw_image(self, raw_image):
+        if raw_image is None:
+            return False
+        
         super(NavigationPanelImage, self).update_raw_image(raw_image)
-        #self.zoom_panel_image.update_raw_image(raw_image)
+        self.corrected_img_shape = self.raw_image.shape[:2]
+        self.zoom_panel_image.update_raw_image(raw_image)
         
     def update_homography(self):
         #print('on_size')
@@ -524,7 +528,15 @@ class ZoomPanelImage(ImagePanelManager):
         self.zoom_spin_button.Bind(wx.EVT_SPIN_DOWN, self.on_zoom_down)
         self.zoom_spin_button.Bind(wx.EVT_SPIN_UP, self.on_zoom_up)
         self.wx_panel.Bind(wx.EVT_MOUSEWHEEL, self.on_zoom_mouse_wheel)
+    
+    def update_raw_image(self, raw_image):
+        if raw_image is None:
+            return False
         
+        super(ZoomPanelImage, self).update_raw_image(raw_image)
+        self.corrected_img_shape = self.raw_image.shape[:2]
+        self._center = np.array(self.raw_image.shape[:2][::-1])/2
+    
     def set_zoom(self, zoom):
         """
         :param zoom: Zoom percentage.
@@ -764,8 +776,9 @@ class MainFrame(form_builder_output.MainFrame):
                   self.zoom_panel_image1, self.zoom_panel_image2]
         for panel in panels:
             panel.align_homography = np.identity(3)
-            panel.corrected_img_shape = panel.raw_image.shape[:2]
-            panel.update_all()
+            if panel.raw_image is not None:
+                panel.corrected_img_shape = panel.raw_image.shape[:2]
+                panel.update_all()
         
         self.sync_zooms_checkbox.SetValue(False)
         self.sync_zooms_checkbox.Enable(False)
@@ -843,14 +856,26 @@ class MainFrame(form_builder_output.MainFrame):
             return
         
         raw_image = cv2.imread(file_path)
+        
+        if raw_image is None:
+            print("Cannot open image.")
+            return False
+        
         if raw_image.ndim == 3:
             # BGR to RGB.
             raw_image = raw_image[:,:,::-1]
         
         panel.update_raw_image(raw_image)
+        
         self.on_align_original(None)
             
     def on_save_points(self, event):
+        pts1 = self.nav_panel_image1.get_red_points()
+        pts2 = self.nav_panel_image2.get_red_points()
+        
+        if pts1 is None or pts2 is None:
+            return
+        
         fdlg = wx.FileDialog(self, 'Save point correspondences', os.getcwd(), 
                              'points', '*.txt', wx.SAVE|wx.OVERWRITE_PROMPT)
         if fdlg.ShowModal() == wx.ID_OK:
@@ -858,11 +883,16 @@ class MainFrame(form_builder_output.MainFrame):
         else:
             return
         
-        points = np.hstack([self.nav_panel_image1.red_points,
-                            self.nav_panel_image2.red_points])
+        points = np.hstack([pts1,pts2])
         np.savetxt(file_path, points)
     
     def on_save_left_to_right_homography(self, event):
+        pts1 = self.nav_panel_image1.get_red_points()
+        pts2 = self.nav_panel_image2.get_red_points()
+        
+        if pts1 is None or pts2 is None:
+            return
+        
         fdlg = wx.FileDialog(self, 'Save left -> right homography', 
                              os.getcwd(), 'homography', '*.txt', 
                              wx.SAVE|wx.OVERWRITE_PROMPT)
@@ -871,13 +901,17 @@ class MainFrame(form_builder_output.MainFrame):
         else:
             return
         
-        pts1 = self.nav_panel_image1.get_red_points()
-        pts2 = self.nav_panel_image2.get_red_points()
         H = cv2.findHomography(pts1.reshape(-1,1,2), 
                                pts2.reshape(-1,1,2))[0]
         np.savetxt(file_path, H)
         
     def on_save_right_to_left_homography(self, event):
+        pts1 = self.nav_panel_image1.get_red_points()
+        pts2 = self.nav_panel_image2.get_red_points()
+        
+        if pts1 is None or pts2 is None:
+            return
+        
         fdlg = wx.FileDialog(self, 'Save right -> left homography', 
                              os.getcwd(), 'homography', '*.txt', 
                              wx.SAVE|wx.OVERWRITE_PROMPT)
@@ -886,8 +920,6 @@ class MainFrame(form_builder_output.MainFrame):
         else:
             return
         
-        pts1 = self.nav_panel_image1.get_red_points()
-        pts2 = self.nav_panel_image2.get_red_points()
         H = cv2.findHomography(pts2.reshape(-1,1,2), 
                                pts1.reshape(-1,1,2))[0]
         np.savetxt(file_path, H)
