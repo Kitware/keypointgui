@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 import os
 
-license_str = ''.join(['Copyright 2017 by Kitware, Inc.\n',
+license_str = ''.join(['Copyright 2017-2018 by Kitware, Inc.\n',
 'All rights reserved.\n\n',
 'Redistribution and use in source and binary forms, with or without ',
 'modification, are permitted provided that the following conditions are met:',
