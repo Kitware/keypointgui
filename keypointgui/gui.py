@@ -724,7 +724,7 @@ class MainFrame(form_builder_output.MainFrame):
                 h2 = self.nav_panel_image2.align_homography
                 h = np.dot(np.linalg.inv(h2), h1)
                 pos2 = np.dot(h, np.hstack([pos,1]))
-                self.zoom_panel_image2.set_center(pos2)
+                self.zoom_panel_image2.set_center(pos2[:2]/pos2[2])
 
             return
 
@@ -756,11 +756,11 @@ class MainFrame(form_builder_output.MainFrame):
         if button == 1:
             self.zoom_panel_image2.set_center(pos)
             if self.sync_zooms_checkbox.GetValue():
-                h1 = self.nav_panel_image2.align_homography
-                h2 = self.nav_panel_image1.align_homography
-                h = np.dot(np.linalg.inv(h2), h1)
+                h1 = self.nav_panel_image1.align_homography
+                h2 = self.nav_panel_image2.align_homography
+                h = np.dot(np.linalg.inv(h1), h2)
                 pos2 = np.dot(h, np.hstack([pos,1]))
-                self.zoom_panel_image1.set_center(pos2)
+                self.zoom_panel_image1.set_center(pos2[:2]/pos2[2])
 
             return
 
