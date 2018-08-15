@@ -274,23 +274,24 @@ class MainFrame ( wx.Frame ):
     It seems to run without problems with this commented out, but probablty merits a closer look than I can provide.
     -W. B. Turner 8/15/2018
     """
-    # def __del__( self ):
-		# # Disconnect Events
-		# self.align_original_button.Unbind( wx.EVT_BUTTON, None )
-		# self.align_left_to_right_button.Unbind( wx.EVT_BUTTON, None )
-		# self.align_right_to_left_button.Unbind( wx.EVT_BUTTON, None )
-		# self.clear_last_button.Unbind( wx.EVT_BUTTON, None )
-		# self.clear_all_button.Unbind( wx.EVT_BUTTON, None )
-		# self.finish_button.Unbind( wx.EVT_BUTTON, None )
-		# self.cancel_button.Unbind( wx.EVT_BUTTON, None )
-		# self.Unbind( wx.EVT_MENU, id = self.menu_item_load_left_image.GetId() )
-		# self.Unbind( wx.EVT_MENU, id = self.menu_item_load_right_image.GetId() )
-		# self.Unbind( wx.EVT_MENU, id = self.menu_item_save_points.GetId() )
-		# self.Unbind( wx.EVT_MENU, id = self.menu_item_save_left_to_right_homography.GetId() )
-		# self.Unbind( wx.EVT_MENU, id = self.menu_item_save_right_to_left_homography.GetId() )
-		# self.Unbind( wx.EVT_MENU, id = self.exit_menu_item.GetId() )
-		# self.Unbind( wx.EVT_MENU, id = self.menu_item_about.GetId() )
-
+    """
+    def __del__( self ):
+		# Disconnect Events
+		self.align_original_button.Unbind( wx.EVT_BUTTON, None )
+		self.align_left_to_right_button.Unbind( wx.EVT_BUTTON, None )
+		self.align_right_to_left_button.Unbind( wx.EVT_BUTTON, None )
+		self.clear_last_button.Unbind( wx.EVT_BUTTON, None )
+		self.clear_all_button.Unbind( wx.EVT_BUTTON, None )
+		self.finish_button.Unbind( wx.EVT_BUTTON, None )
+		self.cancel_button.Unbind( wx.EVT_BUTTON, None )
+		self.Unbind( wx.EVT_MENU, id = self.menu_item_load_left_image.GetId() )
+		self.Unbind( wx.EVT_MENU, id = self.menu_item_load_right_image.GetId() )
+		self.Unbind( wx.EVT_MENU, id = self.menu_item_save_points.GetId() )
+		self.Unbind( wx.EVT_MENU, id = self.menu_item_save_left_to_right_homography.GetId() )
+		self.Unbind( wx.EVT_MENU, id = self.menu_item_save_right_to_left_homography.GetId() )
+		self.Unbind( wx.EVT_MENU, id = self.exit_menu_item.GetId() )
+		self.Unbind( wx.EVT_MENU, id = self.menu_item_about.GetId() )
+    """
 
 	# Virtual event handlers, overide them in your derived class
 	def on_align_original( self, event ):
