@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-from __future__ import division, print_function
+#from __future__ import division, print_function
 import wx
 from wx.lib.wordwrap import wordwrap
+from wx.adv import AboutBox
 import form_builder_output
 import cv2
 import numpy as np
@@ -231,7 +232,7 @@ class ImagePanelManager(object):
         if self.raw_image is not None:
             #print('on_size')
             panel_width, panel_height = self.wx_panel.GetSize()
-            self.wx_image = wx.EmptyImage(panel_width, panel_height)
+            self.wx_image = wx.Image(panel_width, panel_height)
             self.update_homography()
             self.update_inverse_homography()
             self.warp_image()
@@ -903,7 +904,7 @@ class MainFrame(form_builder_output.MainFrame):
             return
 
         fdlg = wx.FileDialog(self, 'Save point correspondences', os.getcwd(),
-                             'points', '*.txt', wx.SAVE|wx.OVERWRITE_PROMPT)
+                             'points', '*.txt', style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
         if fdlg.ShowModal() == wx.ID_OK:
             file_path = fdlg.GetPath()
         else:
@@ -934,7 +935,7 @@ class MainFrame(form_builder_output.MainFrame):
 
         fdlg = wx.FileDialog(self, 'Save homography',
                              os.getcwd(), 'homography', '*.txt',
-                             wx.SAVE|wx.OVERWRITE_PROMPT)
+                             style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
         if fdlg.ShowModal() == wx.ID_OK:
             file_path = fdlg.GetPath()
         else:
@@ -945,7 +946,7 @@ class MainFrame(form_builder_output.MainFrame):
         np.savetxt(file_path, H)
 
     def on_menu_item_about(self, event):
-        info = wx.AboutDialogInfo()
+        info = wx.adv.AboutDialogInfo()
         info.Name = "Image Point Selection GUI"
         info.Version = "0.0.0"
         info.Copyright = "(C) 2017 Kitware"
@@ -957,7 +958,7 @@ class MainFrame(form_builder_output.MainFrame):
         info.License = wordwrap(license_str, 500,
                                 wx.ClientDC(self))
         # Show the wx.AboutBox
-        wx.AboutBox(info)
+        wx.adv.AboutBox(info)
 
     def on_clear_last_button(self, event=None):
         for panel in [self.nav_panel_image1,
