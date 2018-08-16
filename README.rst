@@ -12,11 +12,17 @@ The "source" code resides under the `keypointgui directory`:
 
 - `gui.py` - the implementation of the GUI, which calls upon the layout defined in`form_builder_output.py`. This is the main "executable".
 
-- `gui.fbp` - wxFormBuilder format file (`necessary version to edit GUI <https://sourceforge.net/projects/wxformbuilder/files/wxformbuilder-nightly/3.5.1-rc1/>`_).
+- `gui.fbp` - wxFormBuilder format file (`necessary version to edit GUI <https://ci.appveyor.com/api/projects/jhasse/wxformbuilder-461d5/artifacts/wxFormBuilder_win32.zip?branch=master>`_ or newer `repository here <www.wxformbuilder.org>`_).
 
 - `form_builder_output.py` - automatically generated from `gui.fbp` using wxFormBuilder.
 
 - `/tests/gui_test.py` - test of the GUI showing programmatic launching of the GUI from within Python.
+
+Installation
+============
+Navigate to the top-level project directory and run the following call:
+  $ python setup.py install
+This should install the OpenCV and wxPython libraries, which are required to run the GUI
 
 Instructions
 ============
