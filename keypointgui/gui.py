@@ -1,7 +1,7 @@
 #!/usr/bin/env python
+from __future__ import division, print_function
 import wx
 from wx.lib.wordwrap import wordwrap
-from wx.adv import AboutBox
 import form_builder_output
 import cv2
 import numpy as np
@@ -956,7 +956,7 @@ class MainFrame(form_builder_output.MainFrame):
         info.Developers = ["Matt Brown"]
         info.License = wordwrap(license_str, 500,
                                 wx.ClientDC(self))
-        # Show the wx.AboutBox
+        # Show the AboutBox
         wx.adv.AboutBox(info)
 
     def on_clear_last_button(self, event=None):
