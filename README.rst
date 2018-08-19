@@ -1,7 +1,11 @@
+############################################
+                 Keypoint GUI
+############################################
+.. image:: /docs/gui_demo_657x508.jpg
+   :alt: gui_demo
 Introduction
 ============
-
-This project provides a GUI enabling the user to select pairs of points between
+This project provides a GUI enabling a user to select pairs of points between
 images (see `image correspondence <https://en.wikipedia.org/wiki/Correspondence_problem>`_),
 which can be saved or used to fit a homography. The GUI functionality is
 implemented with wxPython.
@@ -20,9 +24,37 @@ The "source" code resides under the `keypointgui directory`:
 
 Installation
 ============
-Navigate to the top-level project directory and run the following call:
-  $ python setup.py install
-This should install the OpenCV and wxPython libraries, which are required to run the GUI
+1. Make sure Python is installed and visible from a command terminal:
+
+.. code-block :: console
+
+  $ python -V
+
+2. Clone this repository into the desired directory:
+
+.. code-block :: console
+
+  $ git clone git@kwgitlab.kitware.com:matt.brown/keypointgui.git
+  $ cd keypointgui
+ 
+3. If using Ubuntu 16.04:
+
+.. code-block :: console
+  
+  $ sudo pip install -U -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-16.04 wxPython
+
+4. Install with all dependencies (OpenCV and wxPython):
+
+.. code-block :: console
+
+  $ pip install .
+
+If desired, to uninstall:
+
+.. code-block :: console
+
+  $ pip uninstall keypointgui
+
 
 Instructions
 ============
@@ -30,7 +62,9 @@ Instructions
 You can launch the GUI from within the top-level project directory with the
 following call:
 
-  $ python keypointgui/gui.py
+.. code-block :: console
+
+  $ python -m keypointgui.gui
 
 The GUI is initially empty, but you can load your images using the menu options:
 
@@ -85,5 +119,6 @@ The menu options:
 
   File -> Save Right->Left Homography
 
-saves a homography to a text file that warps coordinates from the left image 
+saves a homography to a text file that warps coordinates from the left image
 into the right image or the right image into the left image, respectively.
+
