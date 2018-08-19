@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ==============================================================================
 
 """
-from distutils.core import setup
-
+#from distutils.core import setup
+from setuptools import setup
 setup(name='keypointgui',
       version='1.0',
       description='Keypoint Matching GUI',
@@ -42,4 +42,9 @@ setup(name='keypointgui',
       url='https://www.python.org/sigs/distutils-sig/',
       packages=['keypointgui'],
       package_data={'keypointgui': ['tests/*.jpg','tests/*.txt']},
+      install_requires=[
+        'opencv-python',
+        'wxpython'
+    ]
+
      )
