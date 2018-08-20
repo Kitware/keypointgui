@@ -100,8 +100,8 @@ class MainFrame ( wx.Frame ):
 
 		bSizer16.Add( self.m_staticText11, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.TOP|wx.RIGHT|wx.LEFT, 5 )
 
-		self.m_slider1 = wx.Slider( self.tool_panel, wx.ID_ANY, 0, 0, 100, wx.DefaultPosition, wx.Size( -1,200 ), wx.SL_INVERSE|wx.SL_VERTICAL )
-		bSizer16.Add( self.m_slider1, 1, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5 )
+		self.left_contrast_slider = wx.Slider( self.tool_panel, wx.ID_ANY, 0, 0, 1000, wx.DefaultPosition, wx.Size( -1,200 ), wx.SL_INVERSE|wx.SL_VERTICAL )
+		bSizer16.Add( self.left_contrast_slider, 1, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5 )
 
 
 		bSizer15.Add( bSizer16, 1, wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -113,8 +113,8 @@ class MainFrame ( wx.Frame ):
 
 		bSizer161.Add( self.m_staticText111, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.TOP|wx.RIGHT|wx.LEFT, 5 )
 
-		self.m_slider11 = wx.Slider( self.tool_panel, wx.ID_ANY, 0, 0, 100, wx.DefaultPosition, wx.Size( -1,200 ), wx.SL_INVERSE|wx.SL_VERTICAL )
-		bSizer161.Add( self.m_slider11, 1, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5 )
+		self.right_contrast_slider = wx.Slider( self.tool_panel, wx.ID_ANY, 0, 0, 1000, wx.DefaultPosition, wx.Size( -1,200 ), wx.SL_INVERSE|wx.SL_VERTICAL )
+		bSizer161.Add( self.right_contrast_slider, 1, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5 )
 
 
 		bSizer15.Add( bSizer161, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5 )
@@ -290,6 +290,8 @@ class MainFrame ( wx.Frame ):
 		self.align_original_button.Bind( wx.EVT_BUTTON, self.on_align_original )
 		self.align_left_to_right_button.Bind( wx.EVT_BUTTON, self.on_align_left_to_right )
 		self.align_right_to_left_button.Bind( wx.EVT_BUTTON, self.on_align_right_to_left )
+		self.left_contrast_slider.Bind( wx.EVT_SCROLL, self.update_image_left_contrast )
+		self.right_contrast_slider.Bind( wx.EVT_SCROLL, self.update_image_right_contrast )
 		self.clear_last_button.Bind( wx.EVT_BUTTON, self.on_clear_last_button )
 		self.clear_all_button.Bind( wx.EVT_BUTTON, self.on_clear_all_button )
 		self.finish_button.Bind( wx.EVT_BUTTON, self.on_finish_button )
@@ -307,6 +309,8 @@ class MainFrame ( wx.Frame ):
 		self.align_original_button.Unbind( wx.EVT_BUTTON, None )
 		self.align_left_to_right_button.Unbind( wx.EVT_BUTTON, None )
 		self.align_right_to_left_button.Unbind( wx.EVT_BUTTON, None )
+		self.left_contrast_slider.Unbind( wx.EVT_SCROLL, None )
+		self.right_contrast_slider.Unbind( wx.EVT_SCROLL, None )
 		self.clear_last_button.Unbind( wx.EVT_BUTTON, None )
 		self.clear_all_button.Unbind( wx.EVT_BUTTON, None )
 		self.finish_button.Unbind( wx.EVT_BUTTON, None )
@@ -328,6 +332,12 @@ class MainFrame ( wx.Frame ):
 		event.Skip()
 
 	def on_align_right_to_left( self, event ):
+		event.Skip()
+
+	def update_image_left_contrast( self, event ):
+		event.Skip()
+
+	def update_image_right_contrast( self, event ):
 		event.Skip()
 
 	def on_clear_last_button( self, event ):

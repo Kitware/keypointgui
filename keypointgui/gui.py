@@ -38,6 +38,18 @@ license_str = ''.join(['Copyright 2017-2018 by Kitware, Inc.\n',
 license_str = 'Unreleased: Squad-X'
 
 
+def update_contrast(image, c):
+    clahe = cv2.createCLAHE(clipLimit=c, tileGridSize=(10,10))
+    if image.ndim == 3:
+        HLS = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
+        HLS[:,:,1] = clahe.apply(HLS[:,:,1])
+        image = cv2.cvtColor(HLS, cv2.COLOR_HLS2BGR)
+    else:
+        image = clahe.apply(image)
+
+    return image
+
+
 class ImagePanelManager(object):
     """Base class for an image contained within a panel.
 
@@ -143,7 +155,10 @@ class ImagePanelManager(object):
 
         """
         self.raw_image = raw_image
-        #self.update_all()
+
+        # The resolution of the image could have changed, so we need to update
+        # everything.
+        self.update_all()
 
     def warp_image(self):
         """Apply homography.
@@ -429,7 +444,6 @@ class NavigationPanelImage(ImagePanelManager):
 
         super(NavigationPanelImage, self).update_raw_image(raw_image)
         self.corrected_img_shape = self.raw_image.shape[:2]
-        self.zoom_panel_image.update_raw_image(raw_image)
 
     def update_homography(self):
         #print('on_size')
@@ -622,7 +636,7 @@ class ZoomPanelImage(ImagePanelManager):
 
 class MainFrame(form_builder_output.MainFrame):
     #constructor
-    def __init__(self, parent, image1, image2, title1='Let Image',
+    def __init__(self, parent, image_left, image_right, title1='Let Image',
                  title2='Right Image', passback_dict={'points',None},
                  initial_zoom=400, window_title='Manual Image Registration'):
         """
@@ -638,8 +652,8 @@ class MainFrame(form_builder_output.MainFrame):
         form_builder_output.MainFrame.__init__(self, parent)
         self.SetTitle(window_title)
         self.zoom = initial_zoom
-        self.image1 = image1
-        self.image2 = image2
+        self._image_left0 = self._image_left = image_left
+        self._image_right0 = self._image_right = image_right
         self.click_state = 0
         assert isinstance(passback_dict, dict)
         self.passback_dict = passback_dict
@@ -651,27 +665,27 @@ class MainFrame(form_builder_output.MainFrame):
             self.image2_nav_panel_title.SetLabel(title2)
 
         # Image 1 views.
-        self.zoom_panel_image1 = ZoomPanelImage(self.image1_zoom_panel,
-                                        self.image1,
+        self.zoom_panel_left = ZoomPanelImage(self.image1_zoom_panel,
+                                        self.image_left,
                                         zoom_spin_ctrl=self.zoom1_spin_ctrl,
                                         click_callback=self.on_clicked_point1,
                                         status_bar=self.status_bar)
 
-        self.nav_panel_image1 = NavigationPanelImage(self.image1_nav_panel,
-                                                     self.image1,
-                                                     self.zoom_panel_image1,
+        self.nav_panel_left = NavigationPanelImage(self.image1_nav_panel,
+                                                     self.image_left,
+                                                     self.zoom_panel_left,
                                                      self.status_bar)
 
         # Image 2 views.
-        self.zoom_panel_image2 = ZoomPanelImage(self.image2_zoom_panel,
-                                        self.image2,
+        self.zoom_panel_right = ZoomPanelImage(self.image2_zoom_panel,
+                                        self.image_right,
                                         zoom_spin_ctrl=self.zoom2_spin_ctrl,
                                         click_callback=self.on_clicked_point2,
                                         status_bar=self.status_bar)
 
-        self.nav_panel_image2 = NavigationPanelImage(self.image2_nav_panel,
-                                                     self.image2,
-                                                     self.zoom_panel_image2,
+        self.nav_panel_right = NavigationPanelImage(self.image2_nav_panel,
+                                                     self.image_right,
+                                                     self.zoom_panel_right,
                                                      self.status_bar)
 
         # Apply the current default interpolation.
@@ -689,36 +703,94 @@ class MainFrame(form_builder_output.MainFrame):
             points = self.passback_dict['points']
             pts1 = points[:,:2]
             pts2 = points[:,2:]
-            self.nav_panel_image1.set_red_points(pts1)
-            self.zoom_panel_image1.set_red_points(pts1)
-            self.nav_panel_image2.set_red_points(pts2)
-            self.zoom_panel_image2.set_red_points(pts2)
+            self.nav_panel_left.set_red_points(pts1)
+            self.zoom_panel_left.set_red_points(pts1)
+            self.nav_panel_right.set_red_points(pts2)
+            self.zoom_panel_right.set_red_points(pts2)
 
         self.Bind(wx.EVT_CLOSE, self.when_closed)
 
         # Allow zooming by mouse scrolling from the upper navigation panels.
         self.image1_nav_panel.Bind(wx.EVT_MOUSEWHEEL,
-                                   self.zoom_panel_image1.on_zoom_mouse_wheel)
+                                   self.zoom_panel_left.on_zoom_mouse_wheel)
         self.image2_nav_panel.Bind(wx.EVT_MOUSEWHEEL,
-                                   self.zoom_panel_image2.on_zoom_mouse_wheel)
+                                   self.zoom_panel_right.on_zoom_mouse_wheel)
 
         self.Show()
         self.SetMinSize(self.GetSize())
+
+    @property
+    def image_left(self):
+        """Return left image.
+
+        If the contrast was ajdusted, the contrast-adjusted version is
+        returned.
+
+        """
+        return self._image_left
+
+    @property
+    def image_right(self):
+        """Return right image.
+
+        If the contrast was ajdusted, the contrast-adjusted version is
+        returned.
+
+        """
+        return self._image_right
+
+    @image_left.setter
+    def image_left(self, image):
+        if image is not self._image_left:
+            # An original version is also stored for reference for contrast
+            # adjustment.
+            self._image_left0 = self._image_left = image
+            self.nav_panel_left.update_raw_image(self.image_left)
+            self.zoom_panel_left.update_raw_image(self.image_left)
+
+    @image_right.setter
+    def image_right(self, image):
+        if image is not self._image_right:
+            # An original version is also stored for reference for contrast
+            # adjustment.
+            self._image_right0 = self._image_right = image
+            self.nav_panel_right.update_raw_image(self.image_right)
+            self.zoom_panel_right.update_raw_image(self.image_right)
+
+    def update_image_left_contrast(self, event):
+        c = 10*self.left_contrast_slider.GetValue()/1000.0
+        if c > 0:
+            self._image_left = update_contrast(self._image_left0, c)
+        else:
+            self._image_left = self._image_left0
+
+        self.nav_panel_left.update_raw_image(self.image_left)
+        self.zoom_panel_left.update_raw_image(self.image_left)
+
+    def update_image_right_contrast(self, event):
+        c = 10*self.right_contrast_slider.GetValue()/1000.0
+        if c > 0:
+            self._image_right = update_contrast(self._image_right0, c)
+        else:
+            self._image_right = self._image_right0
+
+        self.nav_panel_right.update_raw_image(self.image_right)
+        self.zoom_panel_right.update_raw_image(self.image_right)
 
     def on_interpolation_update(self, event):
         interp = self.interpolation_choice.GetSelection()
 
         # Image 1
-        self.zoom_panel_image1.set_interpolation(interp)
-        self.zoom_panel_image1.update_all()
-        self.nav_panel_image1.set_interpolation(interp)
-        self.nav_panel_image1.update_all()
+        self.zoom_panel_left.set_interpolation(interp)
+        self.zoom_panel_left.update_all()
+        self.nav_panel_left.set_interpolation(interp)
+        self.nav_panel_left.update_all()
 
         # Image 2
-        self.zoom_panel_image2.set_interpolation(interp)
-        self.zoom_panel_image2.update_all()
-        self.nav_panel_image2.set_interpolation(interp)
-        self.nav_panel_image2.update_all()
+        self.zoom_panel_right.set_interpolation(interp)
+        self.zoom_panel_right.update_all()
+        self.nav_panel_right.set_interpolation(interp)
+        self.nav_panel_right.update_all()
 
     def on_clicked_point1(self, pos, button):
         """
@@ -728,30 +800,30 @@ class MainFrame(form_builder_output.MainFrame):
 
         """
         if button == 1:
-            self.zoom_panel_image1.set_center(pos)
+            self.zoom_panel_left.set_center(pos)
             if self.sync_zooms_checkbox.GetValue():
-                h1 = self.nav_panel_image1.align_homography
-                h2 = self.nav_panel_image2.align_homography
+                h1 = self.nav_panel_left.align_homography
+                h2 = self.nav_panel_right.align_homography
                 h = np.dot(np.linalg.inv(h2), h1)
                 pos2 = np.dot(h, np.hstack([pos,1]))
-                self.zoom_panel_image2.set_center(pos2[:2]/pos2[2])
+                self.zoom_panel_right.set_center(pos2[:2]/pos2[2])
 
             return
 
         if self.click_state == 0:
             # Ready to start a new point pair.
-            self.nav_panel_image1.add_blue_point(pos)
-            self.zoom_panel_image1.add_blue_point(pos)
+            self.nav_panel_left.add_blue_point(pos)
+            self.zoom_panel_left.add_blue_point(pos)
             self.click_state = 1
         elif self.click_state == 2:
             # Finish out the click pair.
-            point = self.nav_panel_image2.get_blue_points()
-            self.nav_panel_image2.clear_blue_points(refresh=False)
-            self.zoom_panel_image2.clear_blue_points(refresh=False)
-            self.nav_panel_image2.add_red_point(point)
-            self.zoom_panel_image2.add_red_point(point)
-            self.nav_panel_image1.add_red_point(pos)
-            self.zoom_panel_image1.add_red_point(pos)
+            point = self.nav_panel_right.get_blue_points()
+            self.nav_panel_right.clear_blue_points(refresh=False)
+            self.zoom_panel_right.clear_blue_points(refresh=False)
+            self.nav_panel_right.add_red_point(point)
+            self.zoom_panel_right.add_red_point(point)
+            self.nav_panel_left.add_red_point(pos)
+            self.zoom_panel_left.add_red_point(pos)
             self.click_state = 0
 
         #print('Clicked Image Coordinates ({:.2f},{:.2f})'.format(*pos))
@@ -764,37 +836,37 @@ class MainFrame(form_builder_output.MainFrame):
 
         """
         if button == 1:
-            self.zoom_panel_image2.set_center(pos)
+            self.zoom_panel_right.set_center(pos)
             if self.sync_zooms_checkbox.GetValue():
-                h1 = self.nav_panel_image1.align_homography
-                h2 = self.nav_panel_image2.align_homography
+                h1 = self.nav_panel_left.align_homography
+                h2 = self.nav_panel_right.align_homography
                 h = np.dot(np.linalg.inv(h1), h2)
                 pos2 = np.dot(h, np.hstack([pos,1]))
-                self.zoom_panel_image1.set_center(pos2[:2]/pos2[2])
+                self.zoom_panel_left.set_center(pos2[:2]/pos2[2])
 
             return
 
         if self.click_state == 0:
             # Ready to start a new point pair.
-            self.nav_panel_image2.add_blue_point(pos)
-            self.zoom_panel_image2.add_blue_point(pos)
+            self.nav_panel_right.add_blue_point(pos)
+            self.zoom_panel_right.add_blue_point(pos)
             self.click_state = 2
         elif self.click_state == 1:
             # Finish out the click pair.
-            point = self.nav_panel_image1.get_blue_points()
-            self.nav_panel_image1.clear_blue_points(refresh=False)
-            self.zoom_panel_image1.clear_blue_points(refresh=False)
-            self.nav_panel_image1.add_red_point(point)
-            self.zoom_panel_image1.add_red_point(point)
-            self.nav_panel_image2.add_red_point(pos)
-            self.zoom_panel_image2.add_red_point(pos)
+            point = self.nav_panel_left.get_blue_points()
+            self.nav_panel_left.clear_blue_points(refresh=False)
+            self.zoom_panel_left.clear_blue_points(refresh=False)
+            self.nav_panel_left.add_red_point(point)
+            self.zoom_panel_left.add_red_point(point)
+            self.nav_panel_right.add_red_point(pos)
+            self.zoom_panel_right.add_red_point(pos)
             self.click_state = 0
 
         #print('Clicked Image Coordinates ({:.2f},{:.2f})'.format(*pos))
 
     def on_align_original(self, event):
-        panels = [self.nav_panel_image1, self.nav_panel_image2,
-                  self.zoom_panel_image1, self.zoom_panel_image2]
+        panels = [self.nav_panel_left, self.nav_panel_right,
+                  self.zoom_panel_left, self.zoom_panel_right]
         for panel in panels:
             panel.align_homography = np.identity(3)
             if panel.raw_image is not None:
@@ -805,8 +877,8 @@ class MainFrame(form_builder_output.MainFrame):
         self.sync_zooms_checkbox.Enable(False)
 
     def on_align_left_to_right(self, event):
-        pts1 = self.nav_panel_image1.get_red_points()
-        pts2 = self.nav_panel_image2.get_red_points()
+        pts1 = self.nav_panel_left.get_red_points()
+        pts2 = self.nav_panel_right.get_red_points()
         if pts1 is None or pts2 is None or len(pts1) < 4:
             msg = 'Need at least four selected pairs of points to align images.'
             dlg = wx.MessageDialog(self, msg,'Warning',
@@ -817,19 +889,19 @@ class MainFrame(form_builder_output.MainFrame):
 
         H = cv2.findHomography(pts1.reshape(-1,1,2),
                                pts2.reshape(-1,1,2))[0]
-        self.nav_panel_image1.align_homography = H
+        self.nav_panel_left.align_homography = H
 
         # Set zooms so that they match after alignment.
-        self.zoom_panel_image1.set_zoom(self.zoom_panel_image2.zoom)
+        self.zoom_panel_left.set_zoom(self.zoom_panel_right.zoom)
 
-        img_shape = self.nav_panel_image2.raw_image.shape[:2]
-        panels = [self.nav_panel_image1, self.zoom_panel_image1]
+        img_shape = self.nav_panel_right.raw_image.shape[:2]
+        panels = [self.nav_panel_left, self.zoom_panel_left]
         for panel in panels:
             panel.align_homography = H
             panel.corrected_img_shape = img_shape
             panel.update_all()
 
-        panels = [self.nav_panel_image2, self.zoom_panel_image2]
+        panels = [self.nav_panel_right, self.zoom_panel_right]
         for panel in panels:
             panel.align_homography = np.identity(3)
             panel.corrected_img_shape = panel.raw_image.shape[:2]
@@ -839,8 +911,8 @@ class MainFrame(form_builder_output.MainFrame):
         self.sync_zooms_checkbox.SetValue(True)
 
     def on_align_right_to_left(self, event):
-        pts1 = self.nav_panel_image1.get_red_points()
-        pts2 = self.nav_panel_image2.get_red_points()
+        pts1 = self.nav_panel_left.get_red_points()
+        pts2 = self.nav_panel_right.get_red_points()
 
         if pts1 is None or pts2 is None or len(pts1) < 4:
             msg = 'Need at least four selected pairs of points to align images.'
@@ -852,19 +924,19 @@ class MainFrame(form_builder_output.MainFrame):
 
         H = cv2.findHomography(pts2.reshape(-1,1,2),
                                pts1.reshape(-1,1,2))[0]
-        self.nav_panel_image2.align_homography = H
+        self.nav_panel_right.align_homography = H
 
         # Set zooms so that they match after alignment.
-        self.zoom_panel_image2.set_zoom(self.zoom_panel_image1.zoom)
+        self.zoom_panel_right.set_zoom(self.zoom_panel_left.zoom)
 
-        img_shape = self.nav_panel_image1.raw_image.shape[:2]
-        panels = [self.nav_panel_image2, self.zoom_panel_image2]
+        img_shape = self.nav_panel_left.raw_image.shape[:2]
+        panels = [self.nav_panel_right, self.zoom_panel_right]
         for panel in panels:
             panel.align_homography = H
             panel.corrected_img_shape = img_shape
             panel.update_all()
 
-        panels = [self.nav_panel_image1, self.zoom_panel_image1]
+        panels = [self.nav_panel_left, self.zoom_panel_left]
         for panel in panels:
             panel.align_homography = np.identity(3)
             panel.corrected_img_shape = panel.raw_image.shape[:2]
@@ -874,12 +946,23 @@ class MainFrame(form_builder_output.MainFrame):
         self.sync_zooms_checkbox.SetValue(True)
 
     def on_load_left_image(self, event):
-        self.load_image(self.nav_panel_image1)
+        """Called by GUI menu 'Load Left Image'.
+
+        """
+        self.image_left = self.load_image()
+        self.on_align_original(None)
 
     def on_load_right_image(self, event):
-        self.load_image(self.nav_panel_image2)
+        """Called by GUI menu 'Load Right Image'.
 
-    def load_image(self, panel):
+        """
+        self.image_right = self.load_image()
+        self.on_align_original(None)
+
+    def load_image(self):
+        """Ask user to load image from disk.
+
+        """
         fdlg = wx.FileDialog(self, 'Select an image.')
         if fdlg.ShowModal() == wx.ID_OK:
             file_path = fdlg.GetPath()
@@ -896,13 +979,11 @@ class MainFrame(form_builder_output.MainFrame):
             # BGR to RGB.
             raw_image = raw_image[:,:,::-1]
 
-        panel.update_raw_image(raw_image)
-
-        self.on_align_original(None)
+        return raw_image
 
     def on_save_points(self, event):
-        pts1 = self.nav_panel_image1.get_red_points()
-        pts2 = self.nav_panel_image2.get_red_points()
+        pts1 = self.nav_panel_left.get_red_points()
+        pts2 = self.nav_panel_right.get_red_points()
 
         if pts1 is None or pts2 is None:
             msg = 'No points have been selected.'
@@ -923,13 +1004,13 @@ class MainFrame(form_builder_output.MainFrame):
         np.savetxt(file_path, points)
 
     def on_save_left_to_right_homography(self, event):
-        pts1 = self.nav_panel_image1.get_red_points()
-        pts2 = self.nav_panel_image2.get_red_points()
+        pts1 = self.nav_panel_left.get_red_points()
+        pts2 = self.nav_panel_right.get_red_points()
         self.save_homography(pts1, pts2)
 
     def on_save_right_to_left_homography(self, event):
-        pts1 = self.nav_panel_image1.get_red_points()
-        pts2 = self.nav_panel_image2.get_red_points()
+        pts1 = self.nav_panel_left.get_red_points()
+        pts2 = self.nav_panel_right.get_red_points()
         self.save_homography(pts2, pts1)
 
     def save_homography(self, pts1, pts2):
@@ -970,10 +1051,10 @@ class MainFrame(form_builder_output.MainFrame):
         wx.adv.AboutBox(info)
 
     def on_clear_last_button(self, event=None):
-        for panel in [self.nav_panel_image1,
-                      self.nav_panel_image2,
-                      self.zoom_panel_image1,
-                      self.zoom_panel_image2]:
+        for panel in [self.nav_panel_left,
+                      self.nav_panel_right,
+                      self.zoom_panel_left,
+                      self.zoom_panel_right]:
 
             if self.click_state == 0:
                 panel.clear_last_red_point(refresh=True)
@@ -983,10 +1064,10 @@ class MainFrame(form_builder_output.MainFrame):
         self.click_state = 0
 
     def on_clear_all_button(self, event=None):
-        for panel in [self.nav_panel_image1,
-                      self.nav_panel_image2,
-                      self.zoom_panel_image1,
-                      self.zoom_panel_image2]:
+        for panel in [self.nav_panel_left,
+                      self.nav_panel_right,
+                      self.zoom_panel_left,
+                      self.zoom_panel_right]:
             panel.clear_blue_points(refresh=False)
             panel.clear_red_points(refresh=True)
 
@@ -998,10 +1079,10 @@ class MainFrame(form_builder_output.MainFrame):
         self.Close()
 
     def when_closed(self, event=None):
-        if self.nav_panel_image1.red_points is not None and \
-           self.nav_panel_image2.red_points is not None:
-            points = np.hstack([self.nav_panel_image1.red_points,
-                                self.nav_panel_image2.red_points])
+        if self.nav_panel_left.red_points is not None and \
+           self.nav_panel_right.red_points is not None:
+            points = np.hstack([self.nav_panel_left.red_points,
+                                self.nav_panel_right.red_points])
         else:
             points = None
 
