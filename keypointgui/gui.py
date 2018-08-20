@@ -487,8 +487,7 @@ class ZoomPanelImage(ImagePanelManager):
 
     """
     def __init__(self, wx_panel, image=None, zoom=400, center=None,
-                 zoom_spin_button=None, zoom_label=None,
-                 click_callback=None, status_bar=None):
+                 zoom_spin_ctrl=None, click_callback=None, status_bar=None):
         """
         :param wx_panel: Panel to add the image to.
         :type wx_panel: wx.Panel
@@ -518,15 +517,13 @@ class ZoomPanelImage(ImagePanelManager):
         if self.raw_image is not None:
             self.corrected_img_shape = self.raw_image.shape[:2]
 
-        self.zoom_spin_button = zoom_spin_button
-        self.zoom_label = zoom_label
+        self.zoom_spin_ctrl = zoom_spin_ctrl
 
         self.click_callback = click_callback
 
-        self.handle_updated_zoom(zoom)
+        self.set_zoom(zoom, update_spin_ctrl_text=True)
 
-        self.zoom_spin_button.Bind(wx.EVT_SPIN_DOWN, self.on_zoom_down)
-        self.zoom_spin_button.Bind(wx.EVT_SPIN_UP, self.on_zoom_up)
+        self.zoom_spin_ctrl.Bind(wx.EVT_SPINCTRLDOUBLE, self.on_spin_ctrl_text)
         self.wx_panel.Bind(wx.EVT_MOUSEWHEEL, self.on_zoom_mouse_wheel)
 
     @property
@@ -540,15 +537,6 @@ class ZoomPanelImage(ImagePanelManager):
         super(ZoomPanelImage, self).update_raw_image(raw_image)
         self.corrected_img_shape = self.raw_image.shape[:2]
         self._center = np.array(self.raw_image.shape[:2][::-1])/2
-
-    def set_zoom(self, zoom):
-        """
-        :param zoom: Zoom percentage.
-        :type zoom: float
-        """
-        self._zoom = zoom
-        self.zoom_label.SetLabel('{}%'.format(int(np.round(zoom))))
-        self.update_all()
 
     def set_center(self, center):
         """
@@ -591,21 +579,45 @@ class ZoomPanelImage(ImagePanelManager):
             change = 1.01
 
         if val > 0:
-            self.on_zoom_up(change=change)
+            zoom = np.minimum(self._zoom*change, 2000)
         if val < 0:
-            self.on_zoom_down(change=change)
+            zoom = np.maximum(self._zoom/change, 10)
 
-    def on_zoom_up(self, event=None, change=1.02):
-        zoom = np.minimum(self._zoom*change, 2000)
-        self.handle_updated_zoom(zoom)
+        self.set_zoom(zoom, update_spin_ctrl_text=True)
 
-    def on_zoom_down(self, event=None, change=1.02):
-        zoom = np.maximum(self._zoom/change, 10)
-        self.handle_updated_zoom(zoom)
+    def on_spin_ctrl_text(self, event=None):
+        self.set_zoom(self.zoom_spin_ctrl.GetValue(),
+                      update_spin_ctrl_text=False)
 
-    def handle_updated_zoom(self, zoom):
-        self.zoom_label.SetLabel('{}%'.format(int(np.round(zoom))))
-        self.set_zoom(zoom)
+    def set_zoom(self, zoom, update_spin_ctrl_text=True):
+        """Update imagery for the passed zoom value.
+
+        It is assumed that 'zoom' was is already reflected in the the
+        wx.SpinCtrlDouble text.
+
+        :param zoom: Zoom percentage.
+        :type zoom: float
+
+        :param update_spin_ctrl_text: Update the text in zoom_spin_ctrl.
+        :type update_spin_ctrl_text: bool
+
+        """
+        # Clamp to minimum value
+        panel_width, panel_height = self.wx_panel.GetSize()
+        im_height, im_width = self.raw_image.shape[:2]
+        min_zoom = np.minimum(panel_width/im_width, panel_height/im_height)*100
+        min_zoom = int(np.ceil(min_zoom))
+
+        if zoom < min_zoom:
+            zoom = min_zoom
+            update_spin_ctrl_text = True
+
+        self._zoom = zoom
+
+        if update_spin_ctrl_text:
+            self.zoom_spin_ctrl.SetValue('{}%'.format(int(np.round(zoom))))
+
+        self.update_all()
 
 
 class MainFrame(form_builder_output.MainFrame):
@@ -641,8 +653,7 @@ class MainFrame(form_builder_output.MainFrame):
         # Image 1 views.
         self.zoom_panel_image1 = ZoomPanelImage(self.image1_zoom_panel,
                                         self.image1,
-                                        zoom_spin_button=self.zoom1_spin_button,
-                                        zoom_label=self.zoom1_txt,
+                                        zoom_spin_ctrl=self.zoom1_spin_ctrl,
                                         click_callback=self.on_clicked_point1,
                                         status_bar=self.status_bar)
 
@@ -654,8 +665,7 @@ class MainFrame(form_builder_output.MainFrame):
         # Image 2 views.
         self.zoom_panel_image2 = ZoomPanelImage(self.image2_zoom_panel,
                                         self.image2,
-                                        zoom_spin_button=self.zoom2_spin_button,
-                                        zoom_label=self.zoom2_txt,
+                                        zoom_spin_ctrl=self.zoom2_spin_ctrl,
                                         click_callback=self.on_clicked_point2,
                                         status_bar=self.status_bar)
 

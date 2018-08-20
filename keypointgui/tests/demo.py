@@ -41,7 +41,7 @@ import numpy as np
 path = os.path.dirname(os.path.realpath(__file__))
 def main():
     """Generate test conditions.
-    
+
     """
     fname = ''.join([path,'/image.jpg'])
     image1 = cv2.imread(fname)[:,:,::-1]
@@ -52,21 +52,21 @@ def main():
     h[0,0] *= 1.5
     h[1,1] *= 2
     h[0,2] -= 500
-    h[1,2] -= 1000
-    
-    pts1 = np.random.rand(3, 20)
-    pts1[0] *= image1.shape[1]
-    pts1[1] *= image1.shape[0]
-    pts1[2] = 1
-    pts2 = np.dot(h, pts1);
-    pts1 = (pts1[:2]/pts1[2]).T
-    pts2 = (pts2[:2]/pts2[2]).T
-    points = np.hstack([pts1, pts2])
-    
+    h[1,2] -= 1800
+
     dsize = (800,600)
     image2 = cv2.warpPerspective(image1, h, dsize=dsize)
     image2 =  cv2.cvtColor(image2, cv2.COLOR_RGB2GRAY)
-    
+
+    pts2 = np.random.rand(3, 20)
+    pts2[0] *= image2.shape[1]
+    pts2[1] *= image2.shape[0]
+    pts2[2] = 1
+    pts1 = np.dot(np.linalg.inv(h), pts2);
+    pts1 = (pts1[:2]/pts1[2]).T
+    pts2 = (pts2[:2]/pts2[2]).T
+    points = np.hstack([pts1, pts2])
+
     pts = manual_registration(image1, image2, points)
     print('Returned', pts)
     return pts
