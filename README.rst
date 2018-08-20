@@ -84,12 +84,12 @@ The GUI is initially empty, but you can load your images using the menu options:
 
 The top two panes are global views of the loaded images, and the red rectangles
 indicate the regions shown magnified in the associated bottom panes. Clicking in
-either upper pane will recenter the zoomed region, and the mousewheel controls
-the magnification. Clicking in either of the lower images will create a
-temporary blue point. The same feature should be clicked in the other lower
-image, and then both points will turn red, establishing an image point
-correspondence. This process is repeated to build up a set of image point
-correspondences between the two images.
+either top pane (or right clicking in the bottom pane) will recenter the zoomed
+region, and the mousewheel controls the magnification. Left clicking in either
+of the lower images will create a temporary blue point. The same feature should
+be left clicked in the other lower image, and then both points will turn red,
+establishing an image point correspondence. This process is repeated to build up
+a set of image point correspondences between the two images.
 
 Image Alignment
 ---------------
