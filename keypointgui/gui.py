@@ -442,8 +442,8 @@ class NavigationPanelImage(ImagePanelManager):
         if raw_image is None:
             return False
 
+        self.corrected_img_shape = raw_image.shape[:2]
         super(NavigationPanelImage, self).update_raw_image(raw_image)
-        self.corrected_img_shape = self.raw_image.shape[:2]
 
     def update_homography(self):
         #print('on_size')
@@ -548,9 +548,9 @@ class ZoomPanelImage(ImagePanelManager):
         if raw_image is None:
             return False
 
+        self.corrected_img_shape = raw_image.shape[:2]
+        self._center = np.array(raw_image.shape[:2][::-1])/2
         super(ZoomPanelImage, self).update_raw_image(raw_image)
-        self.corrected_img_shape = self.raw_image.shape[:2]
-        self._center = np.array(self.raw_image.shape[:2][::-1])/2
 
     def set_center(self, center):
         """
@@ -561,8 +561,8 @@ class ZoomPanelImage(ImagePanelManager):
         self.update_all()
 
     def update_homography(self):
-        if self._zoom is None:
-            return None
+        if self.raw_image is None:
+            return
 
         #print('on_size')
         panel_width, panel_height = self.wx_panel.GetSize()
@@ -586,6 +586,9 @@ class ZoomPanelImage(ImagePanelManager):
         self.click_callback(pos, button)
 
     def on_zoom_mouse_wheel(self, event=None):
+        if self.raw_image is None:
+            return
+
         val = event.GetWheelRotation()
         if event.ShiftDown():
             change = 1.1
@@ -616,18 +619,16 @@ class ZoomPanelImage(ImagePanelManager):
         :type update_spin_ctrl_text: bool
 
         """
-        if self.raw_image is None:
-            return
-
         # Clamp to minimum value
-        panel_width, panel_height = self.wx_panel.GetSize()
-        im_height, im_width = self.raw_image.shape[:2]
-        min_zoom = np.minimum(panel_width/im_width, panel_height/im_height)*100
-        min_zoom = int(np.ceil(min_zoom))
+        if self.raw_image is not None:
+            panel_width, panel_height = self.wx_panel.GetSize()
+            im_height, im_width = self.raw_image.shape[:2]
+            min_zoom = np.minimum(panel_width/im_width, panel_height/im_height)*100
+            min_zoom = int(np.ceil(min_zoom))
 
-        if zoom < min_zoom:
-            zoom = min_zoom
-            update_spin_ctrl_text = True
+            if zoom < min_zoom:
+                zoom = min_zoom
+                update_spin_ctrl_text = True
 
         self._zoom = zoom
 
