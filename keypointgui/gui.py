@@ -616,6 +616,9 @@ class ZoomPanelImage(ImagePanelManager):
         :type update_spin_ctrl_text: bool
 
         """
+        if self.raw_image is None:
+            return
+
         # Clamp to minimum value
         panel_width, panel_height = self.wx_panel.GetSize()
         im_height, im_width = self.raw_image.shape[:2]
