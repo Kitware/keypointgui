@@ -11,6 +11,6 @@ docker exec -it \
     -e "DISPLAY" \
    	-e "QT_X11_NO_MITSHM=1" \
     $container_name \
-    /bin/bash -c "python /root/keypointgui/gui.py"
+    /bin/bash -c "python /home/user/keypointgui/gui.py"
 
 source $DIR/stop_container.sh

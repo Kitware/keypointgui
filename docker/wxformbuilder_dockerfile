@@ -1,0 +1,32 @@
+FROM ubuntu:18.04
+
+# install packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    ca-certificates \
+    libwxgtk3.0-dev \
+    libwxgtk-media3.0-dev \
+    meson \
+    build-essential \
+    libcanberra-gtk-module \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user and switch to it. Running X11 applications as root does
+# not always work.
+RUN adduser --disabled-password --gecos '' --shell /bin/bash user
+USER user
+
+ENV HOME=/home/user
+RUN chmod 777 /home/user
+WORKDIR /home/user
+
+# Install wxformbuilder
+RUN git clone https://github.com/wxFormBuilder/wxFormBuilder.git
+RUN cd ~/wxFormBuilder && \
+    git checkout 98e1366d9f6e868d7a1eacc8a13263bb8d45acc9 && \
+    git submodule update --init --recursive
+RUN cd ~/wxFormBuilder && \
+    ./create_build_files4.sh && \
+    cd build/3.0/gmake && \
+    make -j $(nproc) config=release

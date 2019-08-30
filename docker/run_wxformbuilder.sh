@@ -1,5 +1,5 @@
-image_name=keypointgui
-container_name=keypointgui
+image_name=wxformbuilder
+container_name=wxformbuilder
 
 # Location of this script.
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -11,6 +11,6 @@ docker exec -it \
     -e "DISPLAY" \
    	-e "QT_X11_NO_MITSHM=1" \
     $container_name \
-    /bin/bash
+    /bin/bash -c "~/wxFormBuilder/output/bin/wxformbuilder"
 
 remove_container $container_name
