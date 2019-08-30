@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ###########################################################################
-## Python code generated with wxFormBuilder (version Aug 19 2018)
+## Python code generated with wxFormBuilder (version Apr 10 2019)
 ## http://www.wxformbuilder.org/
 ##
 ## PLEASE DO *NOT* EDIT THIS FILE!
@@ -63,6 +63,21 @@ class MainFrame ( wx.Frame ):
 
 		bSizer1111.Add( self.alignment_label, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5 )
 
+		transformation_type_choiceChoices = [ u" translation", u"     rigid", u"  similarity", u"    affine", u"homography" ]
+		self.transformation_type_choice = wx.Choice( self.tool_panel, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, transformation_type_choiceChoices, 0 )
+		self.transformation_type_choice.SetSelection( 1 )
+		bSizer1111.Add( self.transformation_type_choice, 0, wx.ALL, 5 )
+
+
+		bSizer1111.Add( ( 0, 7), 1, wx.EXPAND, 5 )
+
+		self.alignment_label1 = wx.StaticText( self.tool_panel, wx.ID_ANY, u"Direction", wx.DefaultPosition, wx.DefaultSize, wx.ST_NO_AUTORESIZE|wx.ALIGN_CENTER_HORIZONTAL )
+		self.alignment_label1.Wrap( -1 )
+
+		self.alignment_label1.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+
+		bSizer1111.Add( self.alignment_label1, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5 )
+
 		self.align_original_button = wx.Button( self.tool_panel, wx.ID_ANY, u"Original", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer1111.Add( self.align_original_button, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5 )
 
@@ -71,6 +86,9 @@ class MainFrame ( wx.Frame ):
 
 		self.align_right_to_left_button = wx.Button( self.tool_panel, wx.ID_ANY, u"Right --> Left", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer1111.Add( self.align_right_to_left_button, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5 )
+
+
+		bSizer1111.Add( ( 0, 7), 1, wx.EXPAND, 5 )
 
 		self.sync_zooms_checkbox = wx.CheckBox( self.tool_panel, wx.ID_ANY, u"Sync Zooms", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.sync_zooms_checkbox.SetValue(True)
@@ -264,6 +282,9 @@ class MainFrame ( wx.Frame ):
 		self.menu_item_save_points = wx.MenuItem( self.menu_file, wx.ID_ANY, u"Save Points", wx.EmptyString, wx.ITEM_NORMAL )
 		self.menu_file.Append( self.menu_item_save_points )
 
+		self.menu_item_load_points = wx.MenuItem( self.menu_file, wx.ID_ANY, u"Load Points", wx.EmptyString, wx.ITEM_NORMAL )
+		self.menu_file.Append( self.menu_item_load_points )
+
 		self.menu_item_save_left_to_right_homography = wx.MenuItem( self.menu_file, wx.ID_ANY, u"Save Left->Right Homography", wx.EmptyString, wx.ITEM_NORMAL )
 		self.menu_file.Append( self.menu_item_save_left_to_right_homography )
 
@@ -299,6 +320,7 @@ class MainFrame ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.on_load_left_image, id = self.menu_item_load_left_image.GetId() )
 		self.Bind( wx.EVT_MENU, self.on_load_right_image, id = self.menu_item_load_right_image.GetId() )
 		self.Bind( wx.EVT_MENU, self.on_save_points, id = self.menu_item_save_points.GetId() )
+		self.Bind( wx.EVT_MENU, self.on_load_points, id = self.menu_item_load_points.GetId() )
 		self.Bind( wx.EVT_MENU, self.on_save_left_to_right_homography, id = self.menu_item_save_left_to_right_homography.GetId() )
 		self.Bind( wx.EVT_MENU, self.on_save_right_to_left_homography, id = self.menu_item_save_right_to_left_homography.GetId() )
 		self.Bind( wx.EVT_MENU, self.on_close_button, id = self.exit_menu_item.GetId() )
@@ -318,6 +340,7 @@ class MainFrame ( wx.Frame ):
 		self.Unbind( wx.EVT_MENU, id = self.menu_item_load_left_image.GetId() )
 		self.Unbind( wx.EVT_MENU, id = self.menu_item_load_right_image.GetId() )
 		self.Unbind( wx.EVT_MENU, id = self.menu_item_save_points.GetId() )
+		self.Unbind( wx.EVT_MENU, id = self.menu_item_load_points.GetId() )
 		self.Unbind( wx.EVT_MENU, id = self.menu_item_save_left_to_right_homography.GetId() )
 		self.Unbind( wx.EVT_MENU, id = self.menu_item_save_right_to_left_homography.GetId() )
 		self.Unbind( wx.EVT_MENU, id = self.exit_menu_item.GetId() )
@@ -359,6 +382,9 @@ class MainFrame ( wx.Frame ):
 		event.Skip()
 
 	def on_save_points( self, event ):
+		event.Skip()
+
+	def on_load_points( self, event ):
 		event.Skip()
 
 	def on_save_left_to_right_homography( self, event ):

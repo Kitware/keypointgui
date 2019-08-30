@@ -6,6 +6,7 @@ import form_builder_output
 import cv2
 import numpy as np
 import os
+import transformations
 
 license_str = ''.join(['Copyright 2017-2018 by Kitware, Inc.\n',
 'All rights reserved.\n\n',
@@ -34,8 +35,6 @@ license_str = ''.join(['Copyright 2017-2018 by Kitware, Inc.\n',
 'CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ',
 'ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE ',
 'POSSIBILITY OF SUCH DAMAGE.'])
-
-license_str = 'Unreleased: Squad-X'
 
 
 def update_contrast(image, c):
@@ -97,7 +96,8 @@ class ImagePanelManager(object):
 
     """
     def __init__(self, wx_panel, raw_image=None, interpolation=1,
-                 status_bar=None, blue_points=None, red_points=None):
+                 status_bar=None, red_points=None, green_points=None,
+                 blue_points=None):
         """Abstract base class.
 
         :param wx_panel: Panel to add the image to.
@@ -123,10 +123,17 @@ class ImagePanelManager(object):
         """
         self.wx_panel = wx_panel
         self.raw_image = raw_image
+
+        if raw_image is not None:
+            self.corrected_img_shape = self.raw_image.shape[:2]
+        else:
+            self.corrected_img_shape = None
+
         self.image = None
         self.wx_image = None
-        self.blue_points = blue_points
-        self.red_points = red_points
+        self._blue_points = blue_points
+        self._red_points = red_points
+        self._green_points = green_points
         self.circle_radius = 5
         self.circle_thickness = 3
 
@@ -149,6 +156,18 @@ class ImagePanelManager(object):
         self.wx_panel.Bind(wx.EVT_PAINT, self.on_paint)
         self.wx_panel.Bind(wx.EVT_SIZE, self.on_size)
         # --------------------------------------------------------------------
+
+    @property
+    def red_points(self):
+        return self._red_points
+
+    @property
+    def green_points(self):
+        return self._green_points
+
+    @property
+    def blue_points(self):
+        return self._blue_points
 
     def update_raw_image(self, raw_image):
         """Replace raw_image and update the rendered view in the panel.
@@ -255,7 +274,7 @@ class ImagePanelManager(object):
     # ----------------- Manage Points that will be Displayed -----------------
     def set_blue_points(self, points, refresh=True):
         points = np.atleast_2d(np.array(points, dtype=np.float64))
-        self.blue_points = points
+        self._blue_points = points
 
         if refresh:
             self.wx_panel.Refresh(True)
@@ -266,20 +285,20 @@ class ImagePanelManager(object):
         :type point: numpy.ndarray
 
         """
-        #point = np.atleast_2d(point.ravel()).T
-        point = np.atleast_2d(point)
+        point = np.array(point)
+        if point.ndim == 1:
+            point = np.atleast_2d(point)
+
+        assert point.shape[1] == 2
         if self.blue_points is None:
             self.set_blue_points(point, refresh)
         else:
-            self.set_blue_points(np.vstack([self.get_blue_points(), point]),
+            self.set_blue_points(np.vstack([self.blue_points, point]),
                                  refresh)
-
-    def get_blue_points(self):
-        return self.blue_points
 
     def set_red_points(self, points, refresh=True):
         points = np.atleast_2d(np.array(points, dtype=np.float64))
-        self.red_points = points
+        self._red_points = points
 
         if refresh:
             self.wx_panel.Refresh(True)
@@ -290,42 +309,80 @@ class ImagePanelManager(object):
         :type point: numpy.ndarray
 
         """
-        #point = np.atleast_2d(point.ravel()).T
-        point = np.atleast_2d(point)
+        point = np.array(point)
+        if point.ndim == 1:
+            point = np.atleast_2d(point)
+
+        assert point.shape[1] == 2
         if self.red_points is None:
             self.set_red_points(point, refresh)
         else:
-            self.set_red_points(np.vstack([self.get_red_points(), point]),
+            self.set_red_points(np.vstack([self.red_points, point]),
                                 refresh)
 
-    def get_red_points(self, refresh=True):
-        return self.red_points
+    def set_green_points(self, points, refresh=True):
+        points = np.atleast_2d(np.array(points, dtype=np.float64))
+        self._green_points = points
+
+        if refresh:
+            self.wx_panel.Refresh(True)
+
+    def add_green_point(self, point, refresh=True):
+        """
+        :param point:
+        :type point: numpy.ndarray
+
+        """
+        point = np.array(point)
+        if point.ndim == 1:
+            point = np.atleast_2d(point)
+
+        assert point.shape[1] == 2
+        if self.green_points is None:
+            self.set_green_points(point, refresh)
+        else:
+            self.set_green_points(np.vstack([self.green_points, point]),
+                                  refresh)
 
     def clear_last_blue_point(self, refresh=True):
         if self.blue_points is not None:
             if len(self.blue_points) == 1:
-                self.blue_points = None
+                self._blue_points = None
             else:
-                self.blue_points = self.blue_points[:-1]
+                self._blue_points = self.blue_points[:-1]
         if refresh:
             self.wx_panel.Refresh(True)
 
     def clear_last_red_point(self, refresh=True):
         if self.red_points is not None:
             if len(self.red_points) == 1:
-                self.red_points = None
+                self._red_points = None
             else:
-                self.red_points = self.red_points[:-1]
+                self._red_points = self.red_points[:-1]
+        if refresh:
+            self.wx_panel.Refresh(True)
+
+    def clear_last_green_point(self, refresh=True):
+        if self.green_points is not None:
+            if len(self.green_points) == 1:
+                self._green_points = None
+            else:
+                self._green_points = self.red_points[:-1]
         if refresh:
             self.wx_panel.Refresh(True)
 
     def clear_blue_points(self, refresh=True):
-        self.blue_points = None
+        self._blue_points = None
         if refresh:
             self.wx_panel.Refresh(True)
 
     def clear_red_points(self, refresh=True):
-        self.red_points = None
+        self._red_points = None
+        if refresh:
+            self.wx_panel.Refresh(True)
+
+    def clear_green_points(self, refresh=True):
+        self._green_points = None
         if refresh:
             self.wx_panel.Refresh(True)
     # -----------------------------------------------------------------------
@@ -343,6 +400,24 @@ class ImagePanelManager(object):
             dc.DrawBitmap(self.wx_bitmap, 0,0)
             self.draw_overlay(dc)
 
+        if self.red_points is not None:
+            dc.SetPen(wx.Pen(wx.RED, self.circle_thickness))
+            dc.SetBrush(wx.Brush("red", wx.TRANSPARENT))
+            for i in range(len(self.red_points)):
+                x, y = self.red_points[i]
+                pt = np.dot(self.homography, [x,y,1])
+                x, y = pt[:2]/pt[2]
+                dc.DrawCircle(x, y, self.circle_radius)
+
+        if self.green_points is not None:
+            dc.SetPen(wx.Pen(wx.GREEN, self.circle_thickness))
+            dc.SetBrush(wx.Brush("green", wx.TRANSPARENT))
+            for i in range(len(self.green_points)):
+                x, y = self.green_points[i]
+                pt = np.dot(self.homography, [x,y,1])
+                x, y = pt[:2]/pt[2]
+                dc.DrawCircle(x, y, self.circle_radius)
+
         if self.blue_points is not None:
             dc.SetPen(wx.Pen(wx.BLUE, self.circle_thickness))
             dc.SetBrush(wx.Brush("blue", wx.TRANSPARENT))
@@ -352,23 +427,16 @@ class ImagePanelManager(object):
                 x, y = pt[:2]/pt[2]
                 dc.DrawCircle(x, y, self.circle_radius)
 
-        if self.red_points is not None:
-            dc.SetPen(wx.Pen(wx.RED, self.circle_thickness))
-            dc.SetBrush(wx.Brush("blue", wx.TRANSPARENT))
-            for i in range(len(self.red_points)):
-                x, y = self.red_points[i]
-                pt = np.dot(self.homography, [x,y,1])
-                x, y = pt[:2]/pt[2]
-                dc.DrawCircle(x, y, self.circle_radius)
-
         if event is not None:
             event.Skip()
 
-    def refresh(self, event):
+    def refresh(self, event=None):
         """Useful to bind the Refresh of self.wx_panel to an event.
 
         """
-        event.Skip()
+        if event is not None:
+            event.Skip()
+
         self.wx_panel.Refresh(True)
 
     def draw_overlay(self, dc):
@@ -412,6 +480,8 @@ class NavigationPanelImage(ImagePanelManager):
     :param align_homography: Homography that "corrects" the image. It takes
         image coordinates from the raw image and returns the corrected image
         coordinates.
+    :param corrected_img_shape: Desired output resolution after
+        'align_homography' is applied to the raw image.
 
     """
     def __init__(self, wx_panel, image, zoom_panel_image, status_bar=None):
@@ -425,11 +495,12 @@ class NavigationPanelImage(ImagePanelManager):
         :param zoom_panel_image: The instance of ZoomPanelImage associated with
         the navigation pane.
         :type zoom_panel_image: ZoomPanelImage
+
         """
         super(NavigationPanelImage, self).__init__(wx_panel, image,
              status_bar=status_bar)
         self.zoom_panel_image = zoom_panel_image
-        self.align_homography = np.identity(3)
+        self.align_homography = None
 
         if self.raw_image is not None:
             self.corrected_img_shape = self.raw_image.shape[:2]
@@ -442,7 +513,13 @@ class NavigationPanelImage(ImagePanelManager):
         if raw_image is None:
             return False
 
-        self.corrected_img_shape = raw_image.shape[:2]
+        if self.align_homography is None:
+            # If align_homography is set, that means the image is to be warped
+            # to align with another image, and 'corrected_img_shape' should be
+            # the resolution of the other image. Otherwise, there is no
+            # correction, and corrected_image_shape matches the raw image.
+            self.corrected_img_shape = raw_image.shape[:2]
+
         super(NavigationPanelImage, self).update_raw_image(raw_image)
 
     def update_homography(self):
@@ -462,15 +539,21 @@ class NavigationPanelImage(ImagePanelManager):
             # Side edges of image should hit the edges of the panel.
             s = panel_width/im_width
             ty = (panel_height - s*im_height)/2
-            self.homography = np.dot(np.array([[s,0,0],[0,s,ty],[0,0,1]]),
-                                     self.align_homography)
+            h = np.array([[s,0,0],[0,s,ty],[0,0,1]])
+            if self.align_homography is not None:
+                h = np.dot(h, self.align_homography)
+
+            self.homography = h
         else:
             # Top edges of image should hit the edges of the panel.
             s = panel_height/im_height
             tx = (panel_width-s*im_width)/2
-            self.homography = np.dot(np.array([[s,0,tx],[0,s,0],[0,0,1]]),
-                                              self.align_homography)
+            h = np.array([[s,0,tx],[0,s,0],[0,0,1]])
 
+            if self.align_homography is not None:
+                h = np.dot(h, self.align_homography)
+
+            self.homography = h
         if False:
             print('Corrected Image Size ({}, {})'.format(im_width, im_height))
             print('Homography', self.homography)
@@ -521,12 +604,12 @@ class ZoomPanelImage(ImagePanelManager):
 
         s"""
         super(ZoomPanelImage, self).__init__(wx_panel, image,
-             status_bar=status_bar)
+              status_bar=status_bar)
 
         if center is None and self.raw_image is not None:
             self._center = np.array(self.raw_image.shape[:2][::-1])/2
 
-        self.align_homography = np.identity(3)
+        self.align_homography = None
 
         if self.raw_image is not None:
             self.corrected_img_shape = self.raw_image.shape[:2]
@@ -544,12 +627,26 @@ class ZoomPanelImage(ImagePanelManager):
     def zoom(self):
         return self._zoom
 
+    @property
+    def center(self):
+        return self._center
+
     def update_raw_image(self, raw_image):
         if raw_image is None:
             return False
 
-        self.corrected_img_shape = raw_image.shape[:2]
-        self._center = np.array(raw_image.shape[:2][::-1])/2
+        corrected_img_shape0 = self.corrected_img_shape
+
+        if self.align_homography is None:
+            # If align_homography is set, that means the image is to be warped
+            # to align with another image, and 'corrected_img_shape' should be
+            # the resolution of the other image. Otherwise, there is no
+            # correction, and corrected_image_shape matches the raw image.
+            self.corrected_img_shape = raw_image.shape[:2]
+
+        if self.corrected_img_shape != corrected_img_shape0:
+            self._center = np.array(raw_image.shape[:2][::-1])/2
+
         super(ZoomPanelImage, self).update_raw_image(raw_image)
 
     def set_center(self, center):
@@ -572,15 +669,22 @@ class ZoomPanelImage(ImagePanelManager):
 
         s = self._zoom/100
 
-        # Get the coordinate in the "corrected" image of the clicked center.
-        center = np.dot(self.align_homography, [self._center[0],
-                                                self._center[1], 1])
-        center = center[:2]/center[2]
+        if self.align_homography is not None:
+            # Get the coordinate in the "corrected" image of the clicked center.
+            center = np.dot(self.align_homography, [self._center[0],
+                                                    self._center[1], 1])
+            center = center[:2]/center[2]
+        else:
+            center = self._center
 
         tx = panel_width/2-s*center[0]
         ty = panel_height/2-s*center[1]
         h_zoom = np.array([[s,0,tx],[0,s,ty],[0,0,1]])
-        self.homography = np.dot(h_zoom, self.align_homography)
+
+        if self.align_homography is not None:
+            self.homography = np.dot(h_zoom, self.align_homography)
+        else:
+            self.homography = h_zoom
 
     def process_clicked_point(self, pos, button):
         self.click_callback(pos, button)
@@ -651,7 +755,6 @@ class MainFrame(form_builder_output.MainFrame):
         :type image_topics: list of str
 
         """
-
         #initialize parent class
         form_builder_output.MainFrame.__init__(self, parent)
         self.SetTitle(window_title)
@@ -761,7 +864,85 @@ class MainFrame(form_builder_output.MainFrame):
             self.nav_panel_right.update_raw_image(self.image_right)
             self.zoom_panel_right.update_raw_image(self.image_right)
 
+    @property
+    def points_to_align(self):
+        """Points from left image and right image to use for alignment.
+
+        """
+        return self.nav_panel_left.red_points, self.nav_panel_right.red_points
+
+    def fit_homography(self, pts1, pts2, homography_type):
+        """Fit special class of homomgraphy.
+
+        :param homography_type:
+        :param homography_type: Integer indicating the type of homography to
+            fit (0 - translation, 1 - rigid, 2 - similarity, 3 - affine, 4 -
+            fully homography).
+        :type homography_type: int
+
+        """
+        if homography_type == 0:
+            # Translation.
+            if pts1 is None or pts2 is None or len(pts1) < 1:
+                self._warn_need_at_least_n_points(1, 'translation')
+                return
+
+            H = np.identity(3)
+            delta = np.mean(pts2 - pts1, 0)
+            H = np.identity(3)
+            H[:2,2] = delta
+        elif homography_type == 1:
+            # Rigid.
+            if pts1 is None or pts2 is None or len(pts1) < 2:
+                self._warn_need_at_least_n_points(2, 'rigid')
+                return
+
+            H = transformations.affine_matrix_from_points(pts1.T, pts2.T,
+                                                          shear=False,
+                                                          scale=False)
+        elif homography_type == 2:
+            # Similarity.
+            if pts1 is None or pts2 is None or len(pts1) < 2:
+                self._warn_need_at_least_n_points(2, 'rigid')
+                return
+
+            H = transformations.affine_matrix_from_points(pts1.T, pts2.T,
+                                                          shear=False,
+                                                          scale=True)
+        elif homography_type == 3:
+            # Affine.
+            if pts1 is None or pts2 is None or len(pts1) < 3:
+                self._warn_need_at_least_n_points(3, 'affine')
+                return
+
+            H = transformations.affine_matrix_from_points(pts1.T, pts2.T,
+                                                          shear=True,
+                                                          scale=True)
+        elif homography_type == 4:
+            # Homography.
+            if pts1 is None or pts2 is None or len(pts1) < 4:
+                self._warn_need_at_least_n_points(4, 'homography')
+                return
+
+            H = cv2.findHomography(pts1.reshape(-1,1,2),
+                                   pts2.reshape(-1,1,2))[0]
+        else:
+            raise Exception()
+
+        return H
+
+    def _warn_need_at_least_n_points(self, n, tform_type):
+        msg = ('Need to select at least %i pairs of points for %s alignment.'
+               % (n,tform_type))
+        dlg = wx.MessageDialog(self, msg,'Warning',
+                               wx.OK | wx.ICON_WARNING)
+        dlg.ShowModal()
+        dlg.Destroy()
+
     def update_image_left_contrast(self, event):
+        if self._image_left0 is None:
+            return
+
         c = 10*self.left_contrast_slider.GetValue()/1000.0
         if c > 0:
             self._image_left = update_contrast(self._image_left0, c)
@@ -772,6 +953,9 @@ class MainFrame(form_builder_output.MainFrame):
         self.zoom_panel_left.update_raw_image(self.image_left)
 
     def update_image_right_contrast(self, event):
+        if self._image_right0 is None:
+            return
+
         c = 10*self.right_contrast_slider.GetValue()/1000.0
         if c > 0:
             self._image_right = update_contrast(self._image_right0, c)
@@ -808,7 +992,13 @@ class MainFrame(form_builder_output.MainFrame):
             if self.sync_zooms_checkbox.GetValue():
                 h1 = self.nav_panel_left.align_homography
                 h2 = self.nav_panel_right.align_homography
-                h = np.dot(np.linalg.inv(h2), h1)
+                if h1 is not None and h2 is None:
+                    h = h1
+                elif h2 is not None and h1 is None:
+                    h = np.linalg.inv(h2)
+                else:
+                    raise Exception()
+
                 pos2 = np.dot(h, np.hstack([pos,1]))
                 self.zoom_panel_right.set_center(pos2[:2]/pos2[2])
 
@@ -821,7 +1011,7 @@ class MainFrame(form_builder_output.MainFrame):
             self.click_state = 1
         elif self.click_state == 2:
             # Finish out the click pair.
-            point = self.nav_panel_right.get_blue_points()
+            point = self.nav_panel_right.blue_points
             self.nav_panel_right.clear_blue_points(refresh=False)
             self.zoom_panel_right.clear_blue_points(refresh=False)
             self.nav_panel_right.add_red_point(point)
@@ -844,7 +1034,13 @@ class MainFrame(form_builder_output.MainFrame):
             if self.sync_zooms_checkbox.GetValue():
                 h1 = self.nav_panel_left.align_homography
                 h2 = self.nav_panel_right.align_homography
-                h = np.dot(np.linalg.inv(h1), h2)
+                if h1 is not None and h2 is None:
+                    h = np.linalg.inv(h1)
+                elif h2 is not None and h1 is None:
+                    h = h2
+                else:
+                    raise Exception()
+
                 pos2 = np.dot(h, np.hstack([pos,1]))
                 self.zoom_panel_left.set_center(pos2[:2]/pos2[2])
 
@@ -857,7 +1053,7 @@ class MainFrame(form_builder_output.MainFrame):
             self.click_state = 2
         elif self.click_state == 1:
             # Finish out the click pair.
-            point = self.nav_panel_left.get_blue_points()
+            point = self.nav_panel_left.blue_points
             self.nav_panel_left.clear_blue_points(refresh=False)
             self.zoom_panel_left.clear_blue_points(refresh=False)
             self.nav_panel_left.add_red_point(point)
@@ -872,7 +1068,7 @@ class MainFrame(form_builder_output.MainFrame):
         panels = [self.nav_panel_left, self.nav_panel_right,
                   self.zoom_panel_left, self.zoom_panel_right]
         for panel in panels:
-            panel.align_homography = np.identity(3)
+            panel.align_homography = None
             if panel.raw_image is not None:
                 panel.corrected_img_shape = panel.raw_image.shape[:2]
                 panel.update_all()
@@ -881,18 +1077,14 @@ class MainFrame(form_builder_output.MainFrame):
         self.sync_zooms_checkbox.Enable(False)
 
     def on_align_left_to_right(self, event):
-        pts1 = self.nav_panel_left.get_red_points()
-        pts2 = self.nav_panel_right.get_red_points()
-        if pts1 is None or pts2 is None or len(pts1) < 4:
-            msg = 'Need at least four selected pairs of points to align images.'
-            dlg = wx.MessageDialog(self, msg,'Warning',
-                                   wx.OK | wx.ICON_WARNING)
-            dlg.ShowModal()
-            dlg.Destroy()
+        pts1,pts2 = self.points_to_align
+
+        H = self.fit_homography(pts1, pts2,
+                                self.transformation_type_choice.GetSelection())
+
+        if H is None:
             return
 
-        H = cv2.findHomography(pts1.reshape(-1,1,2),
-                               pts2.reshape(-1,1,2))[0]
         self.nav_panel_left.align_homography = H
 
         # Set zooms so that they match after alignment.
@@ -907,27 +1099,22 @@ class MainFrame(form_builder_output.MainFrame):
 
         panels = [self.nav_panel_right, self.zoom_panel_right]
         for panel in panels:
-            panel.align_homography = np.identity(3)
+            panel.align_homography = None
             panel.corrected_img_shape = panel.raw_image.shape[:2]
             panel.update_all()
 
         self.sync_zooms_checkbox.Enable(True)
-        self.sync_zooms_checkbox.SetValue(True)
+        #self.sync_zooms_checkbox.SetValue(True)
 
     def on_align_right_to_left(self, event):
-        pts1 = self.nav_panel_left.get_red_points()
-        pts2 = self.nav_panel_right.get_red_points()
+        pts1,pts2 = self.points_to_align
 
-        if pts1 is None or pts2 is None or len(pts1) < 4:
-            msg = 'Need at least four selected pairs of points to align images.'
-            dlg = wx.MessageDialog(self, msg,'Warning',
-                                   wx.OK | wx.ICON_WARNING)
-            dlg.ShowModal()
-            dlg.Destroy()
+        H = self.fit_homography(pts2, pts1,
+                                self.transformation_type_choice.GetSelection())
+
+        if H is None:
             return
 
-        H = cv2.findHomography(pts2.reshape(-1,1,2),
-                               pts1.reshape(-1,1,2))[0]
         self.nav_panel_right.align_homography = H
 
         # Set zooms so that they match after alignment.
@@ -942,26 +1129,34 @@ class MainFrame(form_builder_output.MainFrame):
 
         panels = [self.nav_panel_left, self.zoom_panel_left]
         for panel in panels:
-            panel.align_homography = np.identity(3)
+            panel.align_homography = None
             panel.corrected_img_shape = panel.raw_image.shape[:2]
             panel.update_all()
 
         self.sync_zooms_checkbox.Enable(True)
-        self.sync_zooms_checkbox.SetValue(True)
+        #self.sync_zooms_checkbox.SetValue(True)
 
     def on_load_left_image(self, event):
         """Called by GUI menu 'Load Left Image'.
 
         """
-        self.image_left = self.load_image()
-        self.on_align_original(None)
+        ret = self.load_image()
+
+        if ret is not None:
+            self.image_left = ret
+            self.on_clear_all_button()
+            self.on_align_original(None)
 
     def on_load_right_image(self, event):
         """Called by GUI menu 'Load Right Image'.
 
         """
-        self.image_right = self.load_image()
-        self.on_align_original(None)
+        ret = self.load_image()
+
+        if ret is not None:
+            self.image_right = ret
+            self.on_clear_all_button()
+            self.on_align_original(None)
 
     def load_image(self):
         """Ask user to load image from disk.
@@ -971,13 +1166,13 @@ class MainFrame(form_builder_output.MainFrame):
         if fdlg.ShowModal() == wx.ID_OK:
             file_path = fdlg.GetPath()
         else:
-            return
+            return None
 
         raw_image = cv2.imread(file_path)
 
         if raw_image is None:
             print("Cannot open image.")
-            return False
+            return None
 
         if raw_image.ndim == 3:
             # BGR to RGB.
@@ -986,8 +1181,8 @@ class MainFrame(form_builder_output.MainFrame):
         return raw_image
 
     def on_save_points(self, event):
-        pts1 = self.nav_panel_left.get_red_points()
-        pts2 = self.nav_panel_right.get_red_points()
+        pts1 = self.nav_panel_left.red_points
+        pts2 = self.nav_panel_right.red_points
 
         if pts1 is None or pts2 is None:
             msg = 'No points have been selected.'
@@ -998,7 +1193,8 @@ class MainFrame(form_builder_output.MainFrame):
             return
 
         fdlg = wx.FileDialog(self, 'Save point correspondences', os.getcwd(),
-                             'points', '*.txt', style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+                             'points', '*.txt',
+                             style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
         if fdlg.ShowModal() == wx.ID_OK:
             file_path = fdlg.GetPath()
         else:
@@ -1007,14 +1203,30 @@ class MainFrame(form_builder_output.MainFrame):
         points = np.hstack([pts1,pts2])
         np.savetxt(file_path, points)
 
+    def on_load_points(self, event=None):
+        fdlg = wx.FileDialog(self, 'Load point correspondences', os.getcwd(),
+                             'points', '*.txt', style=wx.FD_OPEN)
+        if fdlg.ShowModal() == wx.ID_OK:
+            file_path = fdlg.GetPath()
+        else:
+            return
+
+        points = np.loadtxt(file_path)
+        pts1 = points[:,:2]
+        pts2 = points[:,2:]
+        self.nav_panel_left.set_red_points(pts1)
+        self.zoom_panel_left.set_red_points(pts1)
+        self.nav_panel_right.set_red_points(pts2)
+        self.zoom_panel_right.set_red_points(pts2)
+
     def on_save_left_to_right_homography(self, event):
-        pts1 = self.nav_panel_left.get_red_points()
-        pts2 = self.nav_panel_right.get_red_points()
+        pts1 = self.nav_panel_left.red_points
+        pts2 = self.nav_panel_right.red_points
         self.save_homography(pts1, pts2)
 
     def on_save_right_to_left_homography(self, event):
-        pts1 = self.nav_panel_left.get_red_points()
-        pts2 = self.nav_panel_right.get_red_points()
+        pts1 = self.nav_panel_left.red_points
+        pts2 = self.nav_panel_right.red_points
         self.save_homography(pts2, pts1)
 
     def save_homography(self, pts1, pts2):
