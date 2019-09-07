@@ -43,7 +43,6 @@ setup(name='keypointgui',
       packages=['keypointgui'],
       package_data={'keypointgui': ['tests/*.jpg','tests/*.txt']},
       install_requires=[
-        'opencv-python',
         'wxpython',
         'transformations'
     ]
