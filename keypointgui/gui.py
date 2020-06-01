@@ -49,6 +49,17 @@ def update_contrast(image, c):
     return image
 
 
+def stretch_range_to_8bit(image):
+    lower_bound = np.min(image)
+    upper_bound = np.max(image)
+    lut = np.concatenate([
+        np.zeros(lower_bound, dtype=np.uint16),
+        np.linspace(0, 255, upper_bound - lower_bound).astype(np.uint16),
+        np.ones(2**16 - upper_bound, dtype=np.uint16) * 255
+    ])
+    return lut[image].astype(np.uint8)
+
+
 class ImagePanelManager(object):
     """Base class for an image contained within a panel.
 
@@ -1168,11 +1179,14 @@ class MainFrame(form_builder_output.MainFrame):
         else:
             return None
 
-        raw_image = cv2.imread(file_path)
+        raw_image = cv2.imread(file_path,-1)
 
         if raw_image is None:
             print("Cannot open image.")
             return None
+
+        if raw_image.dtype is not np.dtype('uint8'):
+            raw_image = stretch_range_to_8bit(raw_image)
 
         if raw_image.ndim == 3:
             # BGR to RGB.
@@ -1289,9 +1303,6 @@ class MainFrame(form_builder_output.MainFrame):
 
     def on_cancel_button(self, event=None):
         self.on_clear_all_button()
-        self.Close()
-
-    def on_finish_button(self, event=None):
         self.Close()
 
     def when_closed(self, event=None):
