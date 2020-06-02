@@ -162,9 +162,6 @@ class MainFrame ( wx.Frame ):
 		self.m_staticline2 = wx.StaticLine( self.tool_panel, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		button_sizer.Add( self.m_staticline2, 0, wx.EXPAND |wx.ALL, 5 )
 
-		self.finish_button = wx.Button( self.tool_panel, wx.ID_ANY, u"Finish", wx.DefaultPosition, wx.DefaultSize, 0 )
-		button_sizer.Add( self.finish_button, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5 )
-
 		self.cancel_button = wx.Button( self.tool_panel, wx.ID_ANY, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0 )
 		button_sizer.Add( self.cancel_button, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 5 )
 
@@ -315,7 +312,6 @@ class MainFrame ( wx.Frame ):
 		self.right_contrast_slider.Bind( wx.EVT_SCROLL, self.update_image_right_contrast )
 		self.clear_last_button.Bind( wx.EVT_BUTTON, self.on_clear_last_button )
 		self.clear_all_button.Bind( wx.EVT_BUTTON, self.on_clear_all_button )
-		self.finish_button.Bind( wx.EVT_BUTTON, self.on_finish_button )
 		self.cancel_button.Bind( wx.EVT_BUTTON, self.on_cancel_button )
 		self.Bind( wx.EVT_MENU, self.on_load_left_image, id = self.menu_item_load_left_image.GetId() )
 		self.Bind( wx.EVT_MENU, self.on_load_right_image, id = self.menu_item_load_right_image.GetId() )
@@ -335,7 +331,6 @@ class MainFrame ( wx.Frame ):
 		self.right_contrast_slider.Unbind( wx.EVT_SCROLL, None )
 		self.clear_last_button.Unbind( wx.EVT_BUTTON, None )
 		self.clear_all_button.Unbind( wx.EVT_BUTTON, None )
-		self.finish_button.Unbind( wx.EVT_BUTTON, None )
 		self.cancel_button.Unbind( wx.EVT_BUTTON, None )
 		self.Unbind( wx.EVT_MENU, id = self.menu_item_load_left_image.GetId() )
 		self.Unbind( wx.EVT_MENU, id = self.menu_item_load_right_image.GetId() )
@@ -367,9 +362,6 @@ class MainFrame ( wx.Frame ):
 		event.Skip()
 
 	def on_clear_all_button( self, event ):
-		event.Skip()
-
-	def on_finish_button( self, event ):
 		event.Skip()
 
 	def on_cancel_button( self, event ):
