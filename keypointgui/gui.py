@@ -2,11 +2,11 @@
 from __future__ import division, print_function
 import wx
 from wx.lib.wordwrap import wordwrap
-import form_builder_output
 import cv2
 import numpy as np
 import os
 import transformations
+from . import form_builder_output
 
 license_str = ''.join(['Copyright 2017-2018 by Kitware, Inc.\n',
 'All rights reserved.\n\n',
