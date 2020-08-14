@@ -484,7 +484,8 @@ class NavigationPanelImage(ImagePanelManager):
         'align_homography' is applied to the raw image.
 
     """
-    def __init__(self, wx_panel, image, zoom_panel_image, status_bar=None):
+    def __init__(self, wx_panel, image, zoom_panel_image, draw_zoom_box=True,
+                 status_bar=None):
         """
         :param wx_panel: Panel to add the image to.
         :type wx_panel: wx.Panel
@@ -496,11 +497,16 @@ class NavigationPanelImage(ImagePanelManager):
         the navigation pane.
         :type zoom_panel_image: ZoomPanelImage
 
+        :param draw_zoom_box: Draw a box indicating where the zoomed panel view
+            is drawn from.
+        :type draw_zoom_box: bool
+
         """
         super(NavigationPanelImage, self).__init__(wx_panel, image,
              status_bar=status_bar)
         self.zoom_panel_image = zoom_panel_image
         self.align_homography = None
+        self.draw_zoom_box = draw_zoom_box
 
         if self.raw_image is not None:
             self.corrected_img_shape = self.raw_image.shape[:2]
@@ -566,16 +572,17 @@ class NavigationPanelImage(ImagePanelManager):
     def draw_overlay(self, dc):
         """
         """
-        dc.SetPen(wx.Pen(wx.RED, 2))
+        if self.draw_zoom_box:
+            dc.SetPen(wx.Pen(wx.RED, 2))
 
-        # Draw zoom window
-        w, h = self.zoom_panel_image.wx_panel.GetSize()
-        pts = np.array([[0,w,w,0,0],[0,0,h,h,0],[1,1,1,1,1]])
-        pts = np.dot(self.zoom_panel_image.inverse_homography, pts)
-        pts = np.dot(self.homography, pts)
-        pts = pts[:2]/pts[2]
-        for i in range(4):
-            dc.DrawLine(pts[0,i], pts[1,i], pts[0,i+1], pts[1,i+1])
+            # Draw zoom window
+            w, h = self.zoom_panel_image.wx_panel.GetSize()
+            pts = np.array([[0,w,w,0,0],[0,0,h,h,0],[1,1,1,1,1]])
+            pts = np.dot(self.zoom_panel_image.inverse_homography, pts)
+            pts = np.dot(self.homography, pts)
+            pts = pts[:2]/pts[2]
+            for i in range(4):
+                dc.DrawLine(pts[0,i], pts[1,i], pts[0,i+1], pts[1,i+1])
 
 
 class ZoomPanelImage(ImagePanelManager):
