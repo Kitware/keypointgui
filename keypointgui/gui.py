@@ -6,7 +6,13 @@ import cv2
 import numpy as np
 import os
 import transformations
-from . import form_builder_output
+
+# TODO: cleaner solution for relative import handling.
+try:
+  import form_builder_output
+except ImportError:
+  from . import form_builder_output
+
 
 license_str = ''.join(['Copyright 2017-2018 by Kitware, Inc.\n',
 'All rights reserved.\n\n',
